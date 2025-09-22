@@ -156,8 +156,7 @@ const useBookSearch = () => {
               responseType: 'text',
               timeout: 8000,
               headers: {
-                'Accept': 'application/xml, text/xml, */*',
-                'User-Agent': 'BookPlatform/1.0'
+                'Accept': 'application/xml, text/xml, */*'
               },
               withCredentials: false
             });
@@ -197,18 +196,34 @@ const useBookSearch = () => {
       console.warn(`[SRU] Initial query failed or returned 0 results. Details: ${details || 'N/A'}. Starting fallbacks.`);
 
       const fallbacks = searchType === 'isbn' && typeof originalQuery === 'string'
-        ? [`dcterms.identifier all "${originalQuery}"`, `identifier all "${originalQuery}"`]
+        ? [
+            `dcterms.identifier all "${originalQuery}"`, 
+            `identifier all "${originalQuery}"`,
+            `title all "${originalQuery}"`,
+            `creator any "${originalQuery}"`
+          ]
         : typeof originalQuery === 'object' && originalQuery.title
-        ? [`title any "${originalQuery.title}"`, `creator any "${originalQuery.author || ''}"`, `subject any "${originalQuery.title}"`]
+        ? [
+            `title any "${originalQuery.title}"`, 
+            `title all "${originalQuery.title}"`,
+            `creator any "${originalQuery.author || ''}"`,
+            `subject any "${originalQuery.title}"`,
+            `publisher any "${originalQuery.publisher || ''}"`
+          ]
         : [];
       
       for (const fallbackCql of fallbacks) {
-        const candDoc = await requestWithQuery(fallbackCql);
-        if (!hasDiagnostics(candDoc) && countRecords(candDoc) > 0) {
-          xmlDoc = candDoc;
-          lastQueryCql = fallbackCql;
-          console.debug(`[SRU] Fallback successful with query: ${fallbackCql}`);
-          break;
+        try {
+          const candDoc = await requestWithQuery(fallbackCql);
+          if (!hasDiagnostics(candDoc) && countRecords(candDoc) > 0) {
+            xmlDoc = candDoc;
+            lastQueryCql = fallbackCql;
+            console.debug(`[SRU] Fallback successful with query: ${fallbackCql}`);
+            break;
+          }
+        } catch (error) {
+          console.debug(`[SRU] Fallback query failed: ${fallbackCql}`, error);
+          continue;
         }
       }
     }
@@ -216,7 +231,8 @@ const useBookSearch = () => {
     // If we still have an error, return empty
     if (hasDiagnostics(xmlDoc)) {
       const details = xmlDoc.getElementsByTagNameNS(DIAG_NS, 'details')[0]?.textContent;
-      setError(`APIエラー: ${details || '検索に失敗しました'}`);
+      console.error(`[SRU] All queries failed. Details: ${details || 'Unknown error'}`);
+      setError(`検索に失敗しました。しばらく待ってから再試行してください。`);
       return [];
     }
 
@@ -251,11 +267,20 @@ const useBookSearch = () => {
         const { title, author, publisher } = query;
 
         const queryParts: string[] = [];
-        if (title) queryParts.push(`title all "${title}"`);
-        if (author) queryParts.push(`creator any "${author}"`);
-        if (publisher) queryParts.push(`publisher all "${publisher}"`);
+        if (title) {
+          // タイトル検索を複数の方法で試行
+          queryParts.push(`title any "${title}"`);
+        }
+        if (author) {
+          // 著者検索を複数の方法で試行
+          queryParts.push(`creator any "${author}"`);
+        }
+        if (publisher) {
+          queryParts.push(`publisher any "${publisher}"`);
+        }
         
-        const cql = queryParts.join(' and ');
+        // より柔軟な検索クエリを構築
+        const cql = queryParts.length > 0 ? queryParts.join(' and ') : `title any "${title || 'book'}"`;
         
         if (cql) {
           finalBooks = await executeSearch(cql, searchType, query);
