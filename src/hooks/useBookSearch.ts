@@ -143,42 +143,87 @@ const useBookSearch = () => {
         // 本番環境では複数のCORSプロキシを順次試行
         const targetUrl = 'https://ndlsearch.ndl.go.jp/api/sru';
         const corsProxies = [
-          `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-          `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-          `https://cors.bridged.cc/?${encodeURIComponent(targetUrl)}`,
-          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
-          `https://thingproxy.freeboard.io/fetch/${targetUrl}`
+          { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`, type: 'allorigins' },
+          { url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, type: 'corsproxy' },
+          { url: `https://cors.bridged.cc/?${encodeURIComponent(targetUrl)}`, type: 'bridged' },
+          { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`, type: 'codetabs' },
+          { url: `https://thingproxy.freeboard.io/fetch/${targetUrl}`, type: 'thingproxy' }
         ];
         
         let lastError;
-        for (const proxyUrl of corsProxies) {
+        for (const proxy of corsProxies) {
           try {
             const requestParams = { ...baseParams, query: queryCql, recordSchema: schema };
-            console.log('Trying proxy:', proxyUrl);
+            console.log('Trying proxy:', proxy.url, 'Type:', proxy.type);
             console.log('Request params:', requestParams);
             
-            // URLパラメータを手動で構築してより確実に送信
-            const urlParams = new URLSearchParams();
-            Object.entries(requestParams).forEach(([key, value]) => {
-              if (value !== undefined && value !== null) {
-                urlParams.append(key, String(value));
-              }
-            });
+            // CORSプロキシサービスに応じて適切な方法でリクエストを送信
+            let res;
+            if (proxy.type === 'allorigins') {
+              // allorigins.winの場合は、ターゲットURLにパラメータを追加してからエンコード
+              const urlParams = new URLSearchParams();
+              Object.entries(requestParams).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                  urlParams.append(key, String(value));
+                }
+              });
+              const targetUrlWithParams = `${targetUrl}?${urlParams.toString()}`;
+              const encodedUrl = encodeURIComponent(targetUrlWithParams);
+              const fullUrl = `https://api.allorigins.win/raw?url=${encodedUrl}`;
+              console.log('Full URL:', fullUrl);
+              
+              res = await axios.get(fullUrl, { 
+                responseType: 'text',
+                timeout: 10000,
+                headers: {
+                  'Accept': 'application/xml, text/xml, */*'
+                },
+                withCredentials: false,
+                validateStatus: (status) => status < 500
+              });
+            } else if (proxy.type === 'corsproxy') {
+              // corsproxy.ioの場合は、POSTリクエストでパラメータを送信
+              const urlParams = new URLSearchParams();
+              Object.entries(requestParams).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                  urlParams.append(key, String(value));
+                }
+              });
+              
+              res = await axios.post(proxy.url, urlParams, {
+                responseType: 'text',
+                timeout: 10000,
+                headers: {
+                  'Accept': 'application/xml, text/xml, */*',
+                  'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                withCredentials: false,
+                validateStatus: (status) => status < 500
+              });
+            } else {
+              // その他のプロキシサービスの場合は、GETリクエストでパラメータを追加
+              const urlParams = new URLSearchParams();
+              Object.entries(requestParams).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                  urlParams.append(key, String(value));
+                }
+              });
+              
+              const fullUrl = `${proxy.url}${proxy.url.includes('?') ? '&' : '?'}${urlParams.toString()}`;
+              console.log('Full URL:', fullUrl);
+              
+              res = await axios.get(fullUrl, { 
+                responseType: 'text',
+                timeout: 10000,
+                headers: {
+                  'Accept': 'application/xml, text/xml, */*'
+                },
+                withCredentials: false,
+                validateStatus: (status) => status < 500
+              });
+            }
             
-            const fullUrl = `${proxyUrl}${proxyUrl.includes('?') ? '&' : '?'}${urlParams.toString()}`;
-            console.log('Full URL:', fullUrl);
-            
-            const res = await axios.get(fullUrl, { 
-              responseType: 'text',
-              timeout: 10000,
-              headers: {
-                'Accept': 'application/xml, text/xml, */*'
-              },
-              withCredentials: false,
-              validateStatus: (status) => status < 500 // 4xxエラーは再試行しない
-            });
-            
-            console.log('Success with proxy:', proxyUrl);
+            console.log('Success with proxy:', proxy.url);
             console.log('Response status:', res.status);
             console.log('Response data length:', res.data.length);
             console.log('Raw response data:', res.data.substring(0, 500)); // 最初の500文字を表示
@@ -200,7 +245,7 @@ const useBookSearch = () => {
             
             return xmlDoc;
           } catch (error) {
-            console.log('Failed with proxy:', proxyUrl, error instanceof Error ? error.message : 'Unknown error');
+            console.log('Failed with proxy:', proxy.url, error instanceof Error ? error.message : 'Unknown error');
             if (axios.isAxiosError(error)) {
               console.log('Axios error details:', {
                 status: error.response?.status,
