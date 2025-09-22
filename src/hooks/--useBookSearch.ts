@@ -26,9 +26,15 @@ const useBookSearch = () => {
     };
     
     // 本番環境では直接NDLのAPIを呼び出し、開発環境ではプロキシを使用
-    const baseUrl = import.meta.env.PROD 
+    const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    let baseUrl = isProduction 
       ? 'https://ndlsearch.ndl.go.jp/api/sru' 
       : '/api/api/sru';
+    
+    // CORS問題を回避するため、本番環境ではCORSプロキシを使用
+    if (isProduction) {
+      baseUrl = `https://cors-anywhere.herokuapp.com/${baseUrl}`;
+    }
     
     const { data } = await axios.get(baseUrl, { 
       params, 
@@ -37,7 +43,8 @@ const useBookSearch = () => {
       headers: {
         'Accept': 'application/xml, text/xml, */*',
         'User-Agent': 'BookPlatform/1.0'
-      }
+      },
+      withCredentials: false // CORS問題を回避
     });
     return new DOMParser().parseFromString(data, 'text/xml');
   }, []);
