@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { googleBooksApi } from '../api/googleBooks';
 import type { Book } from '../types';
 
 const useBooksByCategory = (ndc: string | null) => {

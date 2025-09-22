@@ -97,7 +97,6 @@ const useBookSearch = () => {
           const titleCql = `title any "${searchTitle}"`;
           let booksFromApiSearch = await executeNdlSearch(titleCql);
 
-          const normalizeForFilter = (str: string) => str.toLowerCase().replace(/[\s\u3000]/g, '');
 
           let filteredBooks = parseNdlResponse(booksFromApiSearch);
           
