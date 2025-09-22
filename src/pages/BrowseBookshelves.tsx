@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { mockUsers } from '../data/mockUsers';
 
 const BrowseBookshelves: React.FC = () => {
+  const otherUsers = mockUsers.filter(user => user.id !== 'demo-user-id');
+
   return (
     <div className="container mx-auto">
       <h1 className="text-3xl font-bold mb-8 text-center">本棚を覗く</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {mockUsers.map(user => {
+        {otherUsers.map(user => {
           const allTags = user.bookshelves.flatMap(shelf => shelf.tags);
           const uniqueTags = [...new Map(allTags.map(tag => [tag.id, tag])).values()];
 

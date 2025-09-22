@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import type { UserBook, Bookshelf } from '../types';
 import { Link } from 'react-router-dom';
 

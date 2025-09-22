@@ -1,7 +1,10 @@
-import React, { createContext, useState, useContext, type ReactNode } from 'react';
+import { createContext, useState, useContext, type ReactNode } from 'react';
 import type { UserBook, Bookshelf, Tag, BookCategory } from '../types';
-import { mockBookshelves } from '../data/mockBookshelves';
-import { mockTsundokuBooks } from '../data/mockTsundoku';
+import { mockUsers } from '../data/mockUsers';
+
+const demoUser = mockUsers.find(user => user.id === 'demo-user-id');
+const initialBookshelves = demoUser ? demoUser.bookshelves : [];
+const initialTsundoku = demoUser && demoUser.tsundoku ? demoUser.tsundoku : [];
 
 interface BookshelfContextType {
   bookshelves: Bookshelf[];
@@ -22,8 +25,8 @@ interface BookshelfContextType {
 const BookshelfContext = createContext<BookshelfContextType | undefined>(undefined);
 
 export const BookshelfProvider = ({ children }: { children: ReactNode }) => {
-  const [bookshelves, setBookshelves] = useState<Bookshelf[]>(mockBookshelves);
-  const [tsundokuBooks, setTsundokuBooks] = useState<UserBook[]>([]);
+  const [bookshelves, setBookshelves] = useState<Bookshelf[]>(initialBookshelves);
+  const [tsundokuBooks, setTsundokuBooks] = useState<UserBook[]>(initialTsundoku);
 
   const addBookshelf = (title: string, tags: Tag[], visibility: 'public' | 'private') => {
     const newBookshelf: Bookshelf = {

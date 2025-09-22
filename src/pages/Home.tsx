@@ -1,8 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import BookCard from '../components/BookCard';
 import { useAuth } from '../contexts/AuthContext';
 import { newArrivalsData } from '../data/newArrivals';
+import { recommendationBooks } from '../data/recommendations';
 import NewArrivalBookCard from '../components/NewArrivalBookCard';
+import RecommendationBookCard from '../components/RecommendationBookCard';
 
 // 星評価を表示するコンポーネント
 const StarRating = ({ rating }: { rating: number }) => {
@@ -24,36 +27,36 @@ const StarRating = ({ rating }: { rating: number }) => {
 const dummyActivities = [
   {
     id: "1",
-    user: { name: "読書家A", avatar: "https://dummyimage.com/40x40/ccc/000&text=A" },
-    action: "「星を継ぐもの」を本棚に追加しました。",
+    user: { id: "user-2", name: "読書家A", avatar: "https://dummyimage.com/40x40/ccc/000&text=A" },
+    action: "「組織論のエッセンス」を本棚に追加しました。",
     book: {
-      id: "9784488663018",
-      title: "星を継ぐもの",
-      author: "ジェイムズ・P・ホーガン",
-      isbn: "9784488663018",
+      id: "9784495390792",
+      title: "組織論のエッセンス",
+      author: "Mary Jo Hatch",
+      isbn: "9784495390792",
     },
-    summary: "月で発見された真紅の宇宙服を着た死体。その正体を探るうちに、人類の起源に関わる壮大な謎が明らかになる。",
-    rating: 5,
-    hashtags: ["SF", "ハードSF", "名作"],
-    knowledgeTank: "月面で発見された死体「チャーリー」の謎が物語の中核。",
-    knowledgeTags: ["ガニメデ", "ミネルヴァ", "ルナリアン"],
+    summary: "組織について初めて学ぶ人、組織の「組織化（organizing）」という視点を含めて、組織の理論と現実を結びつけて考えたい人におススメ",
+    rating: 4,
+    hashtags: ["組織論", "組織マネジメント"],
+    knowledgeTank: "理論と実践を結びつける：「組織とは何か」「組織化とは何か」という抽象的な問いを、自分の組織体験（職場・学校・プロジェクトなど）に当てはめて考えると理解が深まる。",
+    knowledgeTags: ["理論と実践", "組織化", "組織体験"],
     timestamp: "2時間前"
   },
   {
     id: "2",
-    user: { name: "SF好きB", avatar: "https://dummyimage.com/40x40/ccc/000&text=B" },
-    action: "「ソラリス」を読み始めました。",
+    user: { id: "user-3", name: "技術好きB", avatar: "https://dummyimage.com/100x100/cccccc/888.png&text=UserB" },
+    action: "「リーダブルコード」を読み始めました。",
     book: {
-      id: "9784150120009",
-      title: "ソラリス",
-      author: "スタニスワフ・レム",
-      isbn: "9784150120009",
+      id: "9784873115658",
+      title: "リーダブルコード",
+      author: "Dustin Boswell, Trevor Foucher",
+      isbn: "9784873115658",
     },
-    summary: "知性を持つ海に覆われた惑星ソラリス。調査基地の科学者たちが体験する不可解な現象と、人間の認識の限界を描く。",
-    rating: 4,
-    hashtags: ["SF", "哲学", "宇宙"],
-    knowledgeTank: "惑星ソラリスの海が、訪問者の記憶から実体のある訪問者を作り出す。",
-    knowledgeTags: ["クリス・ケルヴィン", "ハリー", "シミュラークル"],
+    summary: "エンジニアなら誰もが読むべき。コードの可読性がいかに重要か、具体的なテクニックと共に学べます。",
+    rating: 5,
+    hashtags: ["コーディング", "可読性"],
+    knowledgeTank: "エンジニアなら誰もが読むべき。コードの可読性がいかに重要か、具体的なテクニックと共に学べます。",
+    knowledgeTags: ["命名規則", "コードフォーマット", "コメントの書き方"],
     timestamp: "5時間前"
   },
 ];
@@ -61,6 +64,15 @@ const dummyActivities = [
 
 const Home: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleUserClick = (userId: string) => {
+    navigate(`/users/${userId}`);
+  };
+
+  const handleTagClick = (tag: string) => {
+    navigate(`/search?q=${encodeURIComponent(tag)}`);
+  };
 
   return (
     <div className="container mx-auto">
@@ -95,7 +107,10 @@ const Home: React.FC = () => {
 
                 <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-6">
                   {activity.book && (
-                     <div className="w-full md:w-40 flex-shrink-0">
+                     <div 
+                       className="w-full md:w-40 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                       onClick={() => handleUserClick(activity.user.id)}
+                     >
                       <BookCard
                         id={activity.book.id}
                         title={activity.book.title}
@@ -117,7 +132,13 @@ const Home: React.FC = () => {
                       <h4 className="font-bold font-serif text-main mb-1">ハッシュタグ</h4>
                       <div className="flex flex-wrap gap-2">
                         {activity.hashtags.map(tag => (
-                          <span key={tag} className="bg-background text-main text-xs px-2 py-1 rounded-full border border-border">#{tag}</span>
+                          <span 
+                            key={tag} 
+                            className="bg-background text-main text-xs px-2 py-1 rounded-full border border-border cursor-pointer hover:bg-accent hover:text-primary transition-colors"
+                            onClick={() => handleTagClick(tag)}
+                          >
+                            #{tag}
+                          </span>
                         ))}
                       </div>
                     </div>
@@ -129,7 +150,13 @@ const Home: React.FC = () => {
                       <h4 className="font-bold font-serif text-main mb-1">ナレッジタグ</h4>
                       <div className="flex flex-wrap gap-2">
                          {activity.knowledgeTags.map(tag => (
-                          <span key={tag} className="bg-background text-main text-xs px-2 py-1 rounded-full border border-border">{tag}</span>
+                          <span 
+                            key={tag} 
+                            className="bg-background text-main text-xs px-2 py-1 rounded-full border border-border cursor-pointer hover:bg-accent hover:text-primary transition-colors"
+                            onClick={() => handleTagClick(tag)}
+                          >
+                            #{tag}
+                          </span>
                         ))}
                       </div>
                     </div>
@@ -145,12 +172,16 @@ const Home: React.FC = () => {
       <section>
         <h2 className="text-2xl font-bold font-serif text-main mb-6">あなたへのおすすめ</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
-          {/* Sample BookCards */}
-          <BookCard id="sample1" title="書籍タイトル6" author="著者名6" imageUrl="https://dummyimage.com/150x220/e0e0e0/aaa.png&text=Sample" />
-          <BookCard id="sample2" title="書籍タイトル7" author="著者名7" imageUrl="https://dummyimage.com/150x220/e0e0e0/aaa.png&text=Sample" />
-          <BookCard id="sample3" title="書籍タイトル8" author="著者名8" imageUrl="https://dummyimage.com/150x220/e0e0e0/aaa.png&text=Sample" />
-          <BookCard id="sample4" title="書籍タイトル9" author="著者名9" imageUrl="https://dummyimage.com/150x220/e0e0e0/aaa.png&text=Sample" />
-          <BookCard id="sample5" title="書籍タイトル10" author="著者名10" imageUrl="https://dummyimage.com/150x220/e0e0e0/aaa.png&text=Sample" />
+          {recommendationBooks.map(book => (
+            <RecommendationBookCard
+              key={book.id}
+              id={book.id}
+              title={book.title}
+              author={book.author}
+              isbn={book.isbn}
+              imageUrl={book.imageUrl}
+            />
+          ))}
         </div>
       </section>
 
