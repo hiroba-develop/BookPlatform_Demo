@@ -25,16 +25,34 @@ const useBookSearch = () => {
       query: cql,
     };
     
-    // 本番環境では直接NDLのAPIを呼び出し、開発環境ではプロキシを使用
-    const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-    let baseUrl = isProduction 
-      ? 'https://ndlsearch.ndl.go.jp/api/sru' 
-      : '/api/api/sru';
+    // 環境判定をより確実に行う
+    const isProduction = window.location.hostname.includes('github.io') || 
+                        window.location.hostname.includes('netlify.app') ||
+                        window.location.hostname.includes('vercel.app') ||
+                        (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.includes('192.168.'));
     
-    // CORS問題を回避するため、本番環境ではCORSプロキシを使用
+    console.log('Environment check:', {
+      hostname: window.location.hostname,
+      isProduction,
+      userAgent: navigator.userAgent
+    });
+    
+    let baseUrl;
     if (isProduction) {
-      baseUrl = `https://cors-anywhere.herokuapp.com/${baseUrl}`;
+      // 本番環境では複数のCORSプロキシを試行
+      const corsProxies = [
+        'https://api.allorigins.win/raw?url=',
+        'https://cors-anywhere.herokuapp.com/',
+        'https://thingproxy.freeboard.io/fetch/'
+      ];
+      const targetUrl = 'https://ndlsearch.ndl.go.jp/api/sru';
+      baseUrl = corsProxies[0] + encodeURIComponent(targetUrl);
+    } else {
+      // 開発環境ではプロキシを使用
+      baseUrl = '/api/api/sru';
     }
+    
+    console.log('Using baseUrl:', baseUrl);
     
     const { data } = await axios.get(baseUrl, { 
       params, 
