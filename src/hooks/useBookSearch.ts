@@ -131,12 +131,58 @@ const useBookSearch = () => {
     const SRW_NS = 'http://www.loc.gov/zing/srw/';
     const DIAG_NS = 'http://www.loc.gov/zing/srw/diagnostic/';
 
-    const requestWithQuery = async (queryCql: string, schema: string = 'dcndl') => {
-      const res = await axios.get('/api/api/sru', { 
-        params: { ...baseParams, query: queryCql, recordSchema: schema }, 
-        responseType: 'text' 
-      });
-      return parser.parseFromString(res.data, 'text/xml');
+    const requestWithQuery = async (queryCql: string, schema: string = 'dcndl'): Promise<Document> => {
+      // 環境判定をより確実に行う
+      const isProduction = window.location.hostname.includes('github.io') || 
+                          window.location.hostname.includes('netlify.app') ||
+                          window.location.hostname.includes('vercel.app') ||
+                          (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.includes('192.168.'));
+      
+      if (isProduction) {
+        // 本番環境では複数のCORSプロキシを順次試行
+        const targetUrl = 'https://ndlsearch.ndl.go.jp/api/sru';
+        const corsProxies = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+          `https://cors-anywhere.herokuapp.com/${targetUrl}`,
+          `https://thingproxy.freeboard.io/fetch/${targetUrl}`
+        ];
+        
+        let lastError;
+        for (const proxyUrl of corsProxies) {
+          try {
+            console.log('Trying proxy:', proxyUrl);
+            const res = await axios.get(proxyUrl, { 
+              params: { ...baseParams, query: queryCql, recordSchema: schema }, 
+              responseType: 'text',
+              timeout: 8000,
+              headers: {
+                'Accept': 'application/xml, text/xml, */*',
+                'User-Agent': 'BookPlatform/1.0'
+              },
+              withCredentials: false
+            });
+            console.log('Success with proxy:', proxyUrl);
+            return parser.parseFromString(res.data, 'text/xml');
+          } catch (error) {
+            console.log('Failed with proxy:', proxyUrl, error instanceof Error ? error.message : 'Unknown error');
+            lastError = error;
+            continue;
+          }
+        }
+        
+        if (lastError) {
+          throw lastError;
+        }
+        throw new Error('All CORS proxies failed');
+      } else {
+        // 開発環境ではプロキシを使用
+        const baseUrl = '/api/api/sru';
+        const res = await axios.get(baseUrl, { 
+          params: { ...baseParams, query: queryCql, recordSchema: schema }, 
+          responseType: 'text' 
+        });
+        return parser.parseFromString(res.data, 'text/xml');
+      }
     };
     
     const hasDiagnostics = (doc: Document) => doc.getElementsByTagNameNS(SRW_NS, 'diagnostics').length > 0;
