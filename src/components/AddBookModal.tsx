@@ -139,6 +139,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose, onSave, bo
     
     const bookToAdd: UserBook = {
       ...selectedBook,
+      isbn: selectedBook.isbn || '',
       status,
       userTags: tags,
       visibility,

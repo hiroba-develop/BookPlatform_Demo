@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { UserBook } from '../types';
+import { type UserBook } from '../types';
 import { StarIcon } from '@heroicons/react/24/solid';
 
 interface UserBookDisplayProps {
@@ -63,7 +63,7 @@ const UserBookDisplay: React.FC<UserBookDisplayProps> = ({ book }) => {
           <h4 className="font-semibold text-sm mb-2 text-gray-700">評価</h4>
           <div className="space-y-1 text-sm">
             <div className="flex justify-between items-center"><span>総合点</span>{renderStars(book.userRating.overall)}</div>
-            <div className="flex justify-between items-center"><span>分かりやすさ</span>{renderStars(book.userRating.clarity)}</div>
+            <div className="flex justify-between items-center"><span>分かりやすさ</span>{renderStars(book.userRating.difficulty)}</div>
             <div className="flex justify-between items-center"><span>実用性</span>{renderStars(book.userRating.practicality)}</div>
           </div>
         </div>

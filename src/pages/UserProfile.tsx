@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { mockUsers } from '../data/mockUsers';
 import BookCard from '../components/BookCard';
 import BookDetailModal from '../components/BookDetailModal';
-import { UserBook } from '../types';
+import { type UserBook } from '../types';
 import UserProfileHeader from '../components/UserProfileHeader';
 
 const UserProfile: React.FC = () => {
@@ -36,7 +36,7 @@ const UserProfile: React.FC = () => {
         book={selectedBook}
       />
       <div className="container mx-auto bg-background min-h-screen">
-        <UserProfileHeader user={user} />
+        <UserProfileHeader user={{...user, tsundoku: user.tsundoku || []}} />
 
         {bookshelves.length === 0 ? (
           <div className="text-center py-16 px-6 bg-white rounded-lg shadow">

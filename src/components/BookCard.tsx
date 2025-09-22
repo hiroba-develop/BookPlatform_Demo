@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import type { UserBook, Tag } from '../types';
 
 interface BookCardProps {
@@ -33,7 +32,7 @@ const normalizeIsbn13 = (raw?: string): string | undefined => {
   return undefined;
 };
 
-const BookCard: React.FC<BookCardProps> = ({ id, isbn, title, author, tags, imageUrl, bookState }) => {
+const BookCard: React.FC<BookCardProps> = ({ id, isbn, title, author, tags, imageUrl }) => {
   const fallbackImageUrl = 'https://dummyimage.com/150x220/e0e0e0/aaa.png&text=No+Image';
 
   const normalizedIsbn13 = useMemo(() => normalizeIsbn13(isbn), [isbn]);

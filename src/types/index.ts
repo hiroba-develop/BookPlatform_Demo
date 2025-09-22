@@ -371,11 +371,19 @@ export interface UserBook {
   title: string;
   author: string;
   isbn: string;
-  status: '読了' | '読んでる' | '積読';
+  status: '読了' | '読書中' | '積読';
   rating?: number;
+  userRating?: UserBookRating; // Add this line
   userTags?: Tag[];
   impression?: string;
   readDate?: string;
+  userSummary?: string; // Add this line
+  knowledgeTank?: string;
+  knowledgeTankTags?: Tag[];
+  visibility?: 'public' | 'private';
+  containsSpoiler?: boolean;
+  imageUrl?: string;
+  readingStatus?: 'finished' | 'reading' | 'unread';
 }
 
 export interface Tag {
