@@ -50,7 +50,7 @@ const useBookById = (id: string | undefined) => {
           const link = item.getElementsByTagName('link')[0]?.textContent || '';
           const description = item.getElementsByTagName('description')[0]?.textContent || '概要なし';
           
-          const guid = item.getElementsByTagName('guid')[0]?.textContent || '';
+          // const guid = item.getElementsByTagName('guid')[0]?.textContent || '';
           const identifiers = item.getElementsByTagName('dc:identifier');
           let isbn = '';
           for (let i = 0; i < identifiers.length; i++) {

@@ -60,7 +60,7 @@ const useBookSearch = () => {
         publisher: getText('http://purl.org/dc/elements/1.1/', 'publisher'),
         pubDate: getText('http://purl.org/dc/terms/', 'issued'),
         description: getText('http://purl.org/dc/elements/1.1/', 'description'),
-        imageUrl: isbn ? `https://ndlsearch.ndl.go.jp/thumbnail/${isbn}.jpg` : undefined,
+        imageUrl: isbn ? `https://ndlsearch.ndl.go.jp/thumbnail/${isbn}.jpg` : '',
         link: '',
       };
     };
@@ -98,7 +98,6 @@ const useBookSearch = () => {
           let booksFromApiSearch = await executeNdlSearch(titleCql);
 
           const normalizeForFilter = (str: string) => str.toLowerCase().replace(/[\s\u3000]/g, '');
-          const normalizedSearchTitle = normalizeForFilter(searchTitle);
 
           let filteredBooks = parseNdlResponse(booksFromApiSearch);
           
@@ -122,7 +121,8 @@ const useBookSearch = () => {
           }
         } else if (author) {
           const authorCql = `creator any "${author}"`;
-          finalBooks = await executeNdlSearch(authorCql);
+          const xmlDoc = await executeNdlSearch(authorCql);
+          finalBooks = parseNdlResponse(xmlDoc);
         }
       } else if (searchType === 'isbn' && typeof query === 'string') {
         const cql = `isbn="${query}"`;
