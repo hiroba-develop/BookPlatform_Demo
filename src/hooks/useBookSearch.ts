@@ -234,18 +234,24 @@ const useBookSearch = () => {
       const fallbacks = searchType === 'isbn' && typeof originalQuery === 'string'
         ? [
             `isbn="${originalQuery}"`,
-            `title="${originalQuery}"`,
-            `creator="${originalQuery}"`
+            `title all "${originalQuery}"`,
+            `creator any "${originalQuery}"`
           ]
         : typeof originalQuery === 'object' && originalQuery.title
         ? [
-            `title="${originalQuery.title}"`,
-            `creator="${originalQuery.author || ''}"`,
-            `publisher="${originalQuery.publisher || ''}"`
+            `title all "${originalQuery.title}"`,
+            `creator any "${originalQuery.author || ''}"`,
+            `publisher all "${originalQuery.publisher || ''}"`
           ]
         : [];
       
       for (const fallbackCql of fallbacks) {
+        // 空の文字列や無効なクエリをスキップ
+        if (!fallbackCql || fallbackCql.includes('""') || fallbackCql.includes('""')) {
+          console.debug(`[SRU] Skipping invalid fallback query: ${fallbackCql}`);
+          continue;
+        }
+        
         try {
           const candDoc = await requestWithQuery(fallbackCql);
           if (!hasDiagnostics(candDoc) && countRecords(candDoc) > 0) {
@@ -299,23 +305,23 @@ const useBookSearch = () => {
       if (searchType === 'keyword' && typeof query === 'object') {
         const { title, author, publisher } = query;
 
-        // より基本的な検索クエリを使用
-        let cql = '';
+        // NDLのSRU APIに適したCQL形式を使用
+        const searchQueries = [];
+        
         if (title) {
-          // タイトルのみで検索（最も基本的な方法）
-          cql = `title="${title}"`;
-        } else if (author) {
-          // 著者のみで検索
-          cql = `creator="${author}"`;
-        } else if (publisher) {
-          // 出版社のみで検索
-          cql = `publisher="${publisher}"`;
-        } else {
-          // フォールバック
-          cql = `title="book"`;
+          searchQueries.push(`title all "${title}"`);
+        }
+        if (author) {
+          searchQueries.push(`creator any "${author}"`);
+        }
+        if (publisher) {
+          searchQueries.push(`publisher all "${publisher}"`);
         }
         
-        console.log('Search query:', { title, author, publisher, cql });
+        // 複数の検索条件を組み合わせる
+        const cql = searchQueries.length > 0 ? searchQueries.join(' and ') : `title all "book"`;
+        
+        console.log('Search query:', { title, author, publisher, cql, searchQueries });
         
         if (cql) {
           finalBooks = await executeSearch(cql, searchType, query);
