@@ -125,6 +125,7 @@ const useBookSearch = () => {
       onlyBib: 'true',
       recordPacking: 'xml',
       maximumRecords: 10,
+      startRecord: 1,
     };
     
     const parser = new DOMParser();
@@ -143,10 +144,10 @@ const useBookSearch = () => {
         const targetUrl = 'https://ndlsearch.ndl.go.jp/api/sru';
         const corsProxies = [
           `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-          `https://cors-anywhere.herokuapp.com/${targetUrl}`,
-          `https://thingproxy.freeboard.io/fetch/${targetUrl}`,
           `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-          `https://cors.bridged.cc/?${encodeURIComponent(targetUrl)}`
+          `https://cors.bridged.cc/?${encodeURIComponent(targetUrl)}`,
+          `https://thingproxy.freeboard.io/fetch/${targetUrl}`,
+          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
         ];
         
         let lastError;
@@ -159,11 +160,13 @@ const useBookSearch = () => {
             const res = await axios.get(proxyUrl, { 
               params: requestParams, 
               responseType: 'text',
-              timeout: 8000,
+              timeout: 10000,
               headers: {
-                'Accept': 'application/xml, text/xml, */*'
+                'Accept': 'application/xml, text/xml, */*',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
               },
-              withCredentials: false
+              withCredentials: false,
+              validateStatus: (status) => status < 500 // 4xxエラーは再試行しない
             });
             
             console.log('Success with proxy:', proxyUrl);
@@ -193,8 +196,16 @@ const useBookSearch = () => {
               console.log('Axios error details:', {
                 status: error.response?.status,
                 statusText: error.response?.statusText,
-                data: error.response?.data
+                data: error.response?.data,
+                code: error.code,
+                message: error.message
               });
+              
+              // 4xxエラーの場合は再試行しない
+              if (error.response?.status && error.response.status >= 400 && error.response.status < 500) {
+                console.log('Client error, skipping remaining proxies');
+                break;
+              }
             }
             lastError = error;
             continue;
@@ -249,13 +260,18 @@ const useBookSearch = () => {
         ? [
             `isbn="${originalQuery}"`,
             `title="${originalQuery}"`,
-            `creator="${originalQuery}"`
+            `creator="${originalQuery}"`,
+            `title="${originalQuery}" and creator="*"`,
+            `title="*${originalQuery}*"`
           ]
         : typeof originalQuery === 'object' && originalQuery.title
         ? [
             `title="${originalQuery.title}"`,
+            `title="${originalQuery.title}" and creator="${originalQuery.author || '*'}"`,
             `creator="${originalQuery.author || ''}"`,
-            `publisher="${originalQuery.publisher || ''}"`
+            `publisher="${originalQuery.publisher || ''}"`,
+            `title="*${originalQuery.title}*"`,
+            `title="${originalQuery.title}" and publisher="${originalQuery.publisher || '*'}"`
           ]
         : [];
       
@@ -399,8 +415,12 @@ const useBookSearch = () => {
           setError('検索サービスが見つかりません。しばらく待ってから再試行してください。');
         } else if (err.response?.status && err.response.status >= 500) {
           setError('検索サービスでエラーが発生しました。しばらく待ってから再試行してください。');
+        } else if (err.message.includes('timeout')) {
+          setError('検索がタイムアウトしました。ネットワーク接続を確認してから再試行してください。');
+        } else if (err.message.includes('Network Error')) {
+          setError('ネットワークエラーが発生しました。インターネット接続を確認してから再試行してください。');
         } else {
-          setError('書籍の検索中にエラーが発生しました。しばらく待ってから再試行してください。');
+          setError(`書籍の検索中にエラーが発生しました: ${err.message}。しばらく待ってから再試行してください。`);
         }
       } else {
         setError('書籍の検索中にエラーが発生しました。しばらく待ってから再試行してください。');
