@@ -124,7 +124,7 @@ const useBookSearch = () => {
       recordSchema: 'dcndl',
       onlyBib: 'true',
       recordPacking: 'xml',
-      maximumRecords: 20,
+      maximumRecords: 10, // 件数を減らして確実性を向上
     };
     
     const parser = new DOMParser();
@@ -142,17 +142,22 @@ const useBookSearch = () => {
         // 本番環境では複数のCORSプロキシを順次試行
         const targetUrl = 'https://ndlsearch.ndl.go.jp/api/sru';
         const corsProxies = [
-          `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
           `https://cors-anywhere.herokuapp.com/${targetUrl}`,
-          `https://thingproxy.freeboard.io/fetch/${targetUrl}`
+          `https://thingproxy.freeboard.io/fetch/${targetUrl}`,
+          `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+          `https://cors.bridged.cc/?${encodeURIComponent(targetUrl)}`
         ];
         
         let lastError;
         for (const proxyUrl of corsProxies) {
           try {
+            const requestParams = { ...baseParams, query: queryCql, recordSchema: schema };
             console.log('Trying proxy:', proxyUrl);
+            console.log('Request params:', requestParams);
+            
             const res = await axios.get(proxyUrl, { 
-              params: { ...baseParams, query: queryCql, recordSchema: schema }, 
+              params: requestParams, 
               responseType: 'text',
               timeout: 8000,
               headers: {
@@ -160,10 +165,23 @@ const useBookSearch = () => {
               },
               withCredentials: false
             });
+            
             console.log('Success with proxy:', proxyUrl);
-            return parser.parseFromString(res.data, 'text/xml');
+            console.log('Response status:', res.status);
+            console.log('Response data length:', res.data.length);
+            
+            const xmlDoc = parser.parseFromString(res.data, 'text/xml');
+            console.log('Parsed XML document:', xmlDoc);
+            return xmlDoc;
           } catch (error) {
             console.log('Failed with proxy:', proxyUrl, error instanceof Error ? error.message : 'Unknown error');
+            if (axios.isAxiosError(error)) {
+              console.log('Axios error details:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data
+              });
+            }
             lastError = error;
             continue;
           }
@@ -172,7 +190,25 @@ const useBookSearch = () => {
         if (lastError) {
           throw lastError;
         }
-        throw new Error('All CORS proxies failed');
+        
+        // すべてのCORSプロキシが失敗した場合、直接APIを試行（CORSエラーが発生する可能性があるが、一部のブラウザでは動作する場合がある）
+        console.log('All CORS proxies failed, trying direct API call...');
+        try {
+          const res = await axios.get(targetUrl, { 
+            params: { ...baseParams, query: queryCql, recordSchema: schema }, 
+            responseType: 'text',
+            timeout: 10000,
+            headers: {
+              'Accept': 'application/xml, text/xml, */*'
+            },
+            withCredentials: false
+          });
+          console.log('Direct API call successful');
+          return parser.parseFromString(res.data, 'text/xml');
+        } catch (directError) {
+          console.log('Direct API call also failed:', directError);
+          throw new Error('All CORS proxies and direct API call failed');
+        }
       } else {
         // 開発環境ではプロキシを使用
         const baseUrl = '/api/api/sru';
@@ -197,18 +233,15 @@ const useBookSearch = () => {
 
       const fallbacks = searchType === 'isbn' && typeof originalQuery === 'string'
         ? [
-            `dcterms.identifier all "${originalQuery}"`, 
-            `identifier all "${originalQuery}"`,
-            `title all "${originalQuery}"`,
-            `creator any "${originalQuery}"`
+            `isbn="${originalQuery}"`,
+            `title="${originalQuery}"`,
+            `creator="${originalQuery}"`
           ]
         : typeof originalQuery === 'object' && originalQuery.title
         ? [
-            `title any "${originalQuery.title}"`, 
-            `title all "${originalQuery.title}"`,
-            `creator any "${originalQuery.author || ''}"`,
-            `subject any "${originalQuery.title}"`,
-            `publisher any "${originalQuery.publisher || ''}"`
+            `title="${originalQuery.title}"`,
+            `creator="${originalQuery.author || ''}"`,
+            `publisher="${originalQuery.publisher || ''}"`
           ]
         : [];
       
@@ -266,21 +299,23 @@ const useBookSearch = () => {
       if (searchType === 'keyword' && typeof query === 'object') {
         const { title, author, publisher } = query;
 
-        const queryParts: string[] = [];
+        // より基本的な検索クエリを使用
+        let cql = '';
         if (title) {
-          // タイトル検索を複数の方法で試行
-          queryParts.push(`title any "${title}"`);
-        }
-        if (author) {
-          // 著者検索を複数の方法で試行
-          queryParts.push(`creator any "${author}"`);
-        }
-        if (publisher) {
-          queryParts.push(`publisher any "${publisher}"`);
+          // タイトルのみで検索（最も基本的な方法）
+          cql = `title="${title}"`;
+        } else if (author) {
+          // 著者のみで検索
+          cql = `creator="${author}"`;
+        } else if (publisher) {
+          // 出版社のみで検索
+          cql = `publisher="${publisher}"`;
+        } else {
+          // フォールバック
+          cql = `title="book"`;
         }
         
-        // より柔軟な検索クエリを構築
-        const cql = queryParts.length > 0 ? queryParts.join(' and ') : `title any "${title || 'book'}"`;
+        console.log('Search query:', { title, author, publisher, cql });
         
         if (cql) {
           finalBooks = await executeSearch(cql, searchType, query);
@@ -298,6 +333,7 @@ const useBookSearch = () => {
 
       } else if (searchType === 'isbn' && typeof query === 'string') {
         const cql = `isbn="${query}"`;
+        console.log('ISBN search query:', { query, cql });
         finalBooks = await executeSearch(cql, searchType, query);
       }
 
@@ -328,10 +364,25 @@ const useBookSearch = () => {
       setBooks(uniqueBooks);
 
     } catch (err) {
-      setError('書籍の検索中にエラーが発生しました。');
-      console.error(err);
+      console.error('Search error:', err);
       if (axios.isAxiosError(err)) {
-        console.error('Axios error:', err.response?.data);
+        console.error('Axios error details:', {
+          status: err.response?.status,
+          statusText: err.response?.statusText,
+          data: err.response?.data
+        });
+        
+        if (err.code === 'ERR_BLOCKED_BY_CLIENT' || err.message.includes('CORS')) {
+          setError('検索サービスにアクセスできません。ブラウザの設定を確認するか、しばらく待ってから再試行してください。');
+        } else if (err.response?.status === 404) {
+          setError('検索サービスが見つかりません。しばらく待ってから再試行してください。');
+        } else if (err.response?.status && err.response.status >= 500) {
+          setError('検索サービスでエラーが発生しました。しばらく待ってから再試行してください。');
+        } else {
+          setError('書籍の検索中にエラーが発生しました。しばらく待ってから再試行してください。');
+        }
+      } else {
+        setError('書籍の検索中にエラーが発生しました。しばらく待ってから再試行してください。');
       }
     } finally {
       setLoading(false);
