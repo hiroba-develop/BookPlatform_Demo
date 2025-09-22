@@ -24,14 +24,9 @@ const useBooksByCategory = (ndc: string | null) => {
         
         let baseUrl;
         if (isProduction) {
-          // 本番環境では複数のCORSプロキシを試行
-          const corsProxies = [
-            'https://api.allorigins.win/raw?url=',
-            'https://cors-anywhere.herokuapp.com/',
-            'https://thingproxy.freeboard.io/fetch/'
-          ];
+          // 本番環境では確実に動作するCORSプロキシを使用
           const targetUrl = 'https://ndlsearch.ndl.go.jp/api/opensearch';
-          baseUrl = corsProxies[0] + encodeURIComponent(targetUrl);
+          baseUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
         } else {
           // 開発環境ではプロキシを使用
           baseUrl = '/api/api/opensearch';

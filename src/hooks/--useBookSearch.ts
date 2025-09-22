@@ -37,33 +37,60 @@ const useBookSearch = () => {
       userAgent: navigator.userAgent
     });
     
-    let baseUrl;
+    let data;
     if (isProduction) {
-      // 本番環境では複数のCORSプロキシを試行
-      const corsProxies = [
-        'https://api.allorigins.win/raw?url=',
-        'https://cors-anywhere.herokuapp.com/',
-        'https://thingproxy.freeboard.io/fetch/'
-      ];
+      // 本番環境では複数のCORSプロキシを順次試行
       const targetUrl = 'https://ndlsearch.ndl.go.jp/api/sru';
-      baseUrl = corsProxies[0] + encodeURIComponent(targetUrl);
+      const corsProxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+        `https://cors-anywhere.herokuapp.com/${targetUrl}`,
+        `https://thingproxy.freeboard.io/fetch/${targetUrl}`
+      ];
+      
+      let lastError;
+      for (const proxyUrl of corsProxies) {
+        try {
+          console.log('Trying proxy:', proxyUrl);
+          const response = await axios.get(proxyUrl, { 
+            params, 
+            responseType: 'text',
+            timeout: 8000,
+            headers: {
+              'Accept': 'application/xml, text/xml, */*',
+              'User-Agent': 'BookPlatform/1.0'
+            },
+            withCredentials: false
+          });
+          data = response.data;
+          console.log('Success with proxy:', proxyUrl);
+          break;
+        } catch (error) {
+          console.log('Failed with proxy:', proxyUrl, error.message);
+          lastError = error;
+          continue;
+        }
+      }
+      
+      if (!data) {
+        throw lastError || new Error('All CORS proxies failed');
+      }
     } else {
       // 開発環境ではプロキシを使用
-      baseUrl = '/api/api/sru';
+      const baseUrl = '/api/api/sru';
+      console.log('Using baseUrl:', baseUrl);
+      
+      const response = await axios.get(baseUrl, { 
+        params, 
+        responseType: 'text',
+        timeout: 10000,
+        headers: {
+          'Accept': 'application/xml, text/xml, */*',
+          'User-Agent': 'BookPlatform/1.0'
+        },
+        withCredentials: false
+      });
+      data = response.data;
     }
-    
-    console.log('Using baseUrl:', baseUrl);
-    
-    const { data } = await axios.get(baseUrl, { 
-      params, 
-      responseType: 'text',
-      timeout: 10000, // 10秒のタイムアウト
-      headers: {
-        'Accept': 'application/xml, text/xml, */*',
-        'User-Agent': 'BookPlatform/1.0'
-      },
-      withCredentials: false // CORS問題を回避
-    });
     return new DOMParser().parseFromString(data, 'text/xml');
   }, []);
 
