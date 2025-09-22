@@ -1,72 +1,7 @@
-import { createContext, useState, ReactNode, useContext } from 'react';
-import { UserBook, Bookshelf, Tag, BookCategory } from '../types';
-
-const mockBookshelves: Bookshelf[] = [
-  {
-    id: 'shelf-1',
-    title: '『#技術書』の本棚',
-    tags: [{ id: '技術書', name: '技術書' }],
-    visibility: 'public',
-    categories: [
-      {
-        id: 'cat-1-1',
-        name: 'フロントエンド',
-        books: [
-          {
-            id: 'book-1-1-1',
-            isbn: '9784297127473',
-            title: 'プロを目指す人のためのTypeScript入門 安全なコードの書き方から高度な型の使い方まで',
-            author: 'uhyohyo',
-            publisher: '技術評論社',
-            pubDate: '2022-04-22',
-            imageUrl: '',
-            description: 'TypeScriptの基礎から応用までを解説した書籍。',
-            link: '',
-            status: '読了',
-            userTags: [{ id: 'typescript', name: 'TypeScript' }],
-            knowledgeTank: 'TypeScriptの型システムは非常に強力で、大規模開発には欠かせない。'
-          },
-          {
-            id: 'book-1-1-2',
-            isbn: '9784798157573',
-            title: 'JavaScript逆引きレシピ 第2版',
-            author: '山田 祥寛',
-            publisher: '翔泳社',
-            pubDate: '2018-09-19',
-            imageUrl: '',
-            description: 'JavaScriptの様々なTipsを逆引き形式で探せる便利な一冊。',
-            link: '',
-            status: '読書中',
-            userTags: [{ id: 'javascript', name: 'JavaScript' }],
-          }
-        ]
-      }
-    ]
-  },
-    {
-    id: 'shelf-2',
-    title: '『#小説』の本棚',
-    tags: [{ id: '小説', name: '小説' }],
-    visibility: 'public',
-    categories: [
-      {
-        id: 'cat-2-1',
-        name: 'ミステリー',
-        books: [
-          {
-            id: '1',
-            title: 'そして誰もいなくなった',
-            author: 'アガサ・クリスティー',
-            isbn: '9784151310805',
-            userTags: [{ id: '1', name: 'ミステリー' }, { id: '2', name: '海外小説' }],
-            status: '積読',
-          }
-        ]
-      }
-    ]
-  }
-];
-
+import React, { createContext, useState, useContext, type ReactNode } from 'react';
+import type { UserBook, Bookshelf, Tag, BookCategory } from '../types';
+import { mockBookshelves } from '../data/mockBookshelves';
+import { mockTsundokuBooks } from '../data/mockTsundoku';
 
 interface BookshelfContextType {
   bookshelves: Bookshelf[];

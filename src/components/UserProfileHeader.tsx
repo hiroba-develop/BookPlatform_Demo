@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserProfile as UserProfileType } from '../types';
+import type { UserProfile as UserProfileType } from '../types';
 import { Link } from 'react-router-dom';
 
 interface UserProfileHeaderProps {

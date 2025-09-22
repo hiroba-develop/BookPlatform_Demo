@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Book } from '../types';
+import { googleBooksApi } from '../api/googleBooks';
+import type { Book } from '../types';
 
 const useBooksByCategory = (ndc: string | null) => {
   const [books, setBooks] = useState<Book[]>([]);

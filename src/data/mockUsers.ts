@@ -1,4 +1,4 @@
-import { Bookshelf, UserBook } from '../types';
+import type { Bookshelf, UserBook } from "../types";
 
 export interface MockUser {
   id: string;

@@ -371,6 +371,8 @@ export interface UserBook {
   title: string;
   author: string;
   isbn: string;
+  publisher?: string;
+  description?: string;
   status: '読了' | '読書中' | '積読';
   rating?: number;
   userRating?: UserBookRating; // Add this line

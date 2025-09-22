@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { useBookshelf } from '../contexts/BookshelfContext';
-import { UserBook, Bookshelf } from '../types';
+import React, { useState, useMemo } from 'react';
+import type { UserBook, Bookshelf } from '../types';
 import { Link } from 'react-router-dom';
 
 interface Match {

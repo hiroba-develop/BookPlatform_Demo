@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import type { Book, UserBook, Bookshelf, Tag, BookCategory } from '../types';
+import type { Book, UserBook, Bookshelf, Tag } from '../types';
 import { GlobeAltIcon, LockClosedIcon, XMarkIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import BookSearchModal from './BookSearchModal';
 import { useBookshelf } from '../contexts/BookshelfContext';

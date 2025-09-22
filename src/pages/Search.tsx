@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useUsers } from '../hooks/useUsers';
-import { UserBook, Bookshelf } from '../types';
 import { Link } from 'react-router-dom';
-import { MockUser } from '../data/mockUsers';
+import BookCard from '../components/BookCard';
+import type { UserBook } from '../types';
+import { mockUsers } from '../data/mockUsers';
+import type { MockUser } from '../data/mockUsers';
+import UserBookDisplay from '../components/UserBookDisplay';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { useBookshelf } from '../contexts/BookshelfContext';
+import { useUsers } from '../hooks/useUsers';
 
 interface Match {
   type: 'title' | 'author' | 'tag' | 'summary' | 'knowledge' | 'knowledgeTag';
