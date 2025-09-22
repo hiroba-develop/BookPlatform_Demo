@@ -124,8 +124,7 @@ const useBookSearch = () => {
       recordSchema: 'dcndl',
       onlyBib: 'true',
       recordPacking: 'xml',
-      maximumRecords: 5, // 件数をさらに減らして確実性を向上
-      startRecord: 1, // 開始レコードを明示的に指定
+      maximumRecords: 10,
     };
     
     const parser = new DOMParser();
@@ -143,10 +142,10 @@ const useBookSearch = () => {
         // 本番環境では複数のCORSプロキシを順次試行
         const targetUrl = 'https://ndlsearch.ndl.go.jp/api/sru';
         const corsProxies = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
           `https://cors-anywhere.herokuapp.com/${targetUrl}`,
           `https://thingproxy.freeboard.io/fetch/${targetUrl}`,
           `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-          `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
           `https://cors.bridged.cc/?${encodeURIComponent(targetUrl)}`
         ];
         
