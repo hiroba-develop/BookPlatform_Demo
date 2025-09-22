@@ -35,7 +35,19 @@ const useBookById = (id: string | undefined) => {
           params.isbn = bookId;
         }
 
-        const response = await axios.get('/api/api/opensearch', { params });
+        // 本番環境では直接NDLのAPIを呼び出し、開発環境ではプロキシを使用
+        const baseUrl = import.meta.env.PROD 
+          ? 'https://ndlsearch.ndl.go.jp/api/opensearch' 
+          : '/api/api/opensearch';
+        
+        const response = await axios.get(baseUrl, { 
+          params,
+          timeout: 10000,
+          headers: {
+            'Accept': 'application/xml, text/xml, */*',
+            'User-Agent': 'BookPlatform/1.0'
+          }
+        });
 
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(response.data, "text/xml");

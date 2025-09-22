@@ -24,7 +24,21 @@ const useBookSearch = () => {
       maximumRecords: 50, // Increase records to filter client-side
       query: cql,
     };
-    const { data } = await axios.get('/api/api/sru', { params, responseType: 'text' });
+    
+    // 本番環境では直接NDLのAPIを呼び出し、開発環境ではプロキシを使用
+    const baseUrl = import.meta.env.PROD 
+      ? 'https://ndlsearch.ndl.go.jp/api/sru' 
+      : '/api/api/sru';
+    
+    const { data } = await axios.get(baseUrl, { 
+      params, 
+      responseType: 'text',
+      timeout: 10000, // 10秒のタイムアウト
+      headers: {
+        'Accept': 'application/xml, text/xml, */*',
+        'User-Agent': 'BookPlatform/1.0'
+      }
+    });
     return new DOMParser().parseFromString(data, 'text/xml');
   }, []);
 
@@ -138,7 +152,21 @@ const useBookSearch = () => {
 
     } catch (err) {
       console.error('Book search failed:', err);
-      setError('検索中にエラーが発生しました。');
+      
+      // CORSエラーまたはネットワークエラーの場合の詳細なエラーメッセージ
+      if (axios.isAxiosError(err)) {
+        if (err.code === 'ERR_NETWORK' || err.message.includes('CORS')) {
+          setError('ネットワークエラーが発生しました。インターネット接続を確認してください。');
+        } else if (err.code === 'ECONNABORTED') {
+          setError('リクエストがタイムアウトしました。しばらく待ってから再試行してください。');
+        } else if (err.response?.status === 403) {
+          setError('アクセスが拒否されました。しばらく待ってから再試行してください。');
+        } else {
+          setError(`検索中にエラーが発生しました: ${err.message}`);
+        }
+      } else {
+        setError('検索中にエラーが発生しました。');
+      }
     } finally {
       setLoading(false);
     }

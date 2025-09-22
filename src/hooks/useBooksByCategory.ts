@@ -16,12 +16,22 @@ const useBooksByCategory = (ndc: string | null) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get('/api/api/opensearch', {
+        // 本番環境では直接NDLのAPIを呼び出し、開発環境ではプロキシを使用
+        const baseUrl = import.meta.env.PROD 
+          ? 'https://ndlsearch.ndl.go.jp/api/opensearch' 
+          : '/api/api/opensearch';
+        
+        const response = await axios.get(baseUrl, {
           params: {
             ndc: ndc,
             cnt: 10, // 取得件数
             dpid: "iss-ndl-opac",
           },
+          timeout: 10000,
+          headers: {
+            'Accept': 'application/xml, text/xml, */*',
+            'User-Agent': 'BookPlatform/1.0'
+          }
         });
 
         const parser = new DOMParser();
