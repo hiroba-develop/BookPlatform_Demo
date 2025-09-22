@@ -1,0 +1,1172 @@
+openapi: 3.0.0
+info:
+  title: BookPlatform API
+  version: 1.0.0
+  description: 本棚を可視化するSNSアプリケーションのAPI
+
+paths:
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: ログイン
+      description: ユーザーログイン時使用
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: number
+                  userId:
+                    type: string
+                  token:
+                    type: string
+                  displayName:
+                    type: string
+
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: ユーザー登録
+      description: ユーザー登録時使用
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                displayName:
+                  type: string
+              required:
+                - username
+                - email
+                - password
+                - displayName
+      responses:
+        '200':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: number
+                  userId:
+                    type: string
+                  message:
+                    type: string
+
+  /api/auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: ログアウト
+      description: ログアウト時使用,トークン無効化
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+              required:
+                - token
+      responses:
+        '200':
+          description: ログアウト成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: number
+                  message:
+                    type: string
+
+  /api/auth/password:
+    put:
+      tags:
+        - Authentication
+      summary: パスワード変更
+      description: パスワード変更時使用
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+              required:
+                - currentPassword
+                - newPassword
+      responses:
+        '200':
+          description: パスワード変更成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: number
+                  message:
+                    type: string
+
+  /api/auth/password/reset-request:
+    post:
+      tags:
+        - Authentication
+      summary: パスワードリセット要求
+      description: パスワードリセット用メール送信
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+              required:
+                - email
+      responses:
+        '200':
+          description: リセットメール送信成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: number
+                  message:
+                    type: string
+
+  /api/auth/password/reset-confirm:
+    post:
+      tags:
+        - Authentication
+      summary: パスワードリセット実行
+      description: リセットトークンでパスワード変更
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resetToken:
+                  type: string
+                newPassword:
+                  type: string
+              required:
+                - resetToken
+                - newPassword
+      responses:
+        '200':
+          description: パスワードリセット成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: number
+                  message:
+                    type: string
+
+  /api/screens/home/{userId}:
+    get:
+      tags:
+        - Screen Initialization
+      summary: ホーム画面初期表示
+      description: ホーム画面に必要な全データを一括取得
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ホーム画面データ取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeScreenData'
+
+  /api/screens/my-bookshelves/{userId}:
+    get:
+      tags:
+        - Screen Initialization
+      summary: 私の本棚画面初期表示
+      description: 私の本棚画面に必要な全データを一括取得
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 私の本棚画面データ取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyBookshelfScreenData'
+
+  /api/screens/browse-bookshelves/{userId}:
+    get:
+      tags:
+        - Screen Initialization
+      summary: 本棚を覗く画面初期表示
+      description: 他ユーザーの本棚一覧画面に必要な全データを一括取得
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 本棚一覧画面データ取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowseBookshelvesSreenData'
+
+  /api/screens/user-detail/{userId}/{targetUserId}:
+    get:
+      tags:
+        - Screen Initialization
+      summary: ユーザー詳細画面初期表示
+      description: ユーザー詳細画面に必要な全データを一括取得
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: targetUserId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ユーザー詳細画面データ取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailScreenData'
+
+  /api/screens/book-detail/{userId}/{isbn}:
+    get:
+      tags:
+        - Screen Initialization
+      summary: 本の詳細画面初期表示
+      description: 本の詳細画面に必要な全データを一括取得
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: isbn
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 本の詳細画面データ取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetailScreenData'
+
+  /api/screens/mypage/{userId}:
+    get:
+      tags:
+        - Screen Initialization
+      summary: マイページ初期表示
+      description: マイページ（設定画面）に必要な全データを一括取得
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: マイページデータ取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MypageScreenData'
+
+  /api/users/{userId}:
+    get:
+      tags:
+        - Users
+      summary: ユーザー情報取得
+      description: ユーザー情報取得
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ユーザー情報取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+    put:
+      tags:
+        - Users
+      summary: ユーザー情報更新
+      description: ユーザー情報更新,imageFileがある場合はアイコンも更新
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                userProfile:
+                  $ref: '#/components/schemas/UserProfile'
+                imageFile:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: ユーザー情報更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: number
+                  iconImagePath:
+                    type: string
+                  message:
+                    type: string
+    delete:
+      tags:
+        - Users
+      summary: ユーザー削除
+      description: ユーザー削除（論理削除）
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ユーザー削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: number
+                  message:
+                    type: string
+
+  /api/bookshelves:
+    get:
+      tags:
+        - Bookshelves
+      summary: 本棚一覧取得
+      description: 指定ユーザーの本棚一覧取得
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 本棚一覧取得成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bookshelf'
+    post:
+      tags:
+        - Bookshelves
+      summary: 本棚作成
+      description: 本棚新規作成
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bookshelf'
+      responses:
+        '200':
+          description: 本棚作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: number
+                  bookshelfId:
+                    type: number
+                  message:
+                    type: string
+
+  /api/bookshelves/{bookshelfId}:
+    get:
+      tags:
+        - Bookshelves
+      summary: 本棚詳細取得
+      description: 本棚詳細情報取得
+      parameters:
+        - name: bookshelfId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 本棚詳細取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bookshelf'
+    put:
+      tags:
+        - Bookshelves
+      summary: 本棚更新
+      description: 本棚情報更新
+      parameters:
+        - name: bookshelfId
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bookshelf'
+      responses:
+        '200':
+          description: 本棚更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: number
+                  message:
+                    type: string
+    delete:
+      tags:
+        - Bookshelves
+      summary: 本棚削除
+      description: 本棚削除
+      parameters:
+        - name: bookshelfId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 本棚削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: number
+                  message:
+                    type: string
+
+  /api/suggest/categories:
+    get:
+      tags:
+        - Suggestions
+      summary: カテゴリサジェスト取得
+      description: 入力中の文字列に対するカテゴリサジェスト
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: カテゴリサジェスト取得成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategorySuggestion'
+
+  /api/suggest/hashtags:
+    get:
+      tags:
+        - Suggestions
+      summary: ハッシュタグサジェスト取得
+      description: 入力中の文字列に対するハッシュタグサジェスト
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ハッシュタグサジェスト取得成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HashtagSuggestion'
+
+components:
+  schemas:
+    UserProfile:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: ユーザーID（UUID）
+        username:
+          type: string
+          description: ユーザー名（英数字、ログイン用）
+        displayName:
+          type: string
+          description: 表示名（日本語可）
+        iconImagePath:
+          type: string
+          description: アイコン画像パス
+        selfIntroduction:
+          type: string
+          description: 自己紹介文
+        bookshelfPublicFlg:
+          type: string
+          description: 本棚公開フラグ（'0':非公開、'1':公開）
+        recommendDisplayFlg:
+          type: string
+          description: おすすめ表示フラグ（'0':非表示、'1':表示）
+        tsundokuPublicFlg:
+          type: string
+          description: 積読棚公開フラグ（'0':非公開、'1':公開）
+        totalBooks:
+          type: number
+          description: 総登録本数
+        totalBookshelves:
+          type: number
+          description: 総本棚数
+        createdAt:
+          type: string
+          description: 登録日時
+
+    Bookshelf:
+      type: object
+      properties:
+        bookshelfId:
+          type: number
+          description: 本棚ID
+        bookshelfName:
+          type: string
+          description: 本棚名
+        description:
+          type: string
+          description: 本棚説明
+        publicFlg:
+          type: string
+          description: 公開フラグ（'0':非公開、'1':公開）
+        categoryCount:
+          type: number
+          description: カテゴリ数
+        bookCount:
+          type: number
+          description: 本数
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookshelfCategory'
+        createdAt:
+          type: string
+          description: 作成日時
+
+    BookshelfCategory:
+      type: object
+      properties:
+        bookshelfCategoryId:
+          type: number
+          description: 本棚カテゴリID
+        categoryId:
+          type: number
+          description: カテゴリID
+        categoryName:
+          type: string
+          description: カテゴリ名
+        displayOrder:
+          type: number
+          description: 表示順序
+        bookCount:
+          type: number
+          description: 本数
+        books:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookInfo'
+
+    BookInfo:
+      type: object
+      properties:
+        isbn:
+          type: string
+          description: ISBN（13桁、ハイフンなし）
+        title:
+          type: string
+          description: 書籍タイトル
+        author:
+          type: string
+          description: 著者名
+        publisher:
+          type: string
+          description: 出版社名
+        publicationDate:
+          type: string
+          description: 出版日（YYYY-MM-DD）
+        thumbnailUrl:
+          type: string
+          description: 書影URL
+        description:
+          type: string
+          description: 書籍概要・説明
+
+    HomeScreenData:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryMaster'
+        weeklyNewBooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookInfo'
+        personalizedRecommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonalizedRecommendation'
+        trendingHashtags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hashtag'
+
+    MyBookshelfScreenData:
+      type: object
+      properties:
+        userProfile:
+          allOf:
+            - $ref: '#/components/schemas/UserProfile'
+          description: ユーザープロフィール
+        bookshelves:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bookshelf'
+        readingStats:
+          allOf:
+            - $ref: '#/components/schemas/ReadingStats'
+          description: 読書統計
+        recentBooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserReadingRecord'
+
+    BrowseBookshelvesSreenData:
+      type: object
+      properties:
+        recentlyUpdatedBookshelves:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookshelfWithUser'
+        similarUsersBookshelves:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookshelfWithUser'
+        popularBookshelves:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookshelfWithUser'
+        followingUsersBookshelves:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookshelfWithUser'
+        recommendedUsersBookshelves:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookshelfWithUser'
+        trendingCategories:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrendingCategory'
+
+    UserDetailScreenData:
+      type: object
+      properties:
+        targetUserProfile:
+          allOf:
+            - $ref: '#/components/schemas/UserProfile'
+          description: 対象ユーザープロフィール
+        publicBookshelves:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bookshelf'
+        followStatus:
+          allOf:
+            - $ref: '#/components/schemas/FollowStatus'
+          description: フォロー状況
+        followers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FollowInfo'
+        following:
+          type: array
+          items:
+            $ref: '#/components/schemas/FollowInfo'
+        totalCounts:
+          allOf:
+            - $ref: '#/components/schemas/TotalCounts'
+          description: 総数情報
+
+    BookDetailScreenData:
+      type: object
+      properties:
+        bookInfo:
+          allOf:
+            - $ref: '#/components/schemas/BookInfo'
+          description: 書籍情報
+        userReadingRecords:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserReadingRecord'
+        bookRatingStats:
+          allOf:
+            - $ref: '#/components/schemas/BookRatingStats'
+          description: 書籍評価統計
+        relatedBooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookInfo'
+        userReviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserReadingRecord'
+
+    MypageScreenData:
+      type: object
+      properties:
+        userProfile:
+          allOf:
+            - $ref: '#/components/schemas/UserProfile'
+          description: ユーザープロフィール
+        readingStats:
+          allOf:
+            - $ref: '#/components/schemas/ReadingStats'
+          description: 読書統計
+        privacySettings:
+          allOf:
+            - $ref: '#/components/schemas/PrivacySettings'
+          description: プライバシー設定
+        recentActivity:
+          type: array
+          items:
+            $ref: '#/components/schemas/Activity'
+
+    UserReadingRecord:
+      type: object
+      properties:
+        userBookId:
+          type: number
+          description: ユーザー書籍ID
+        readingStatus:
+          type: string
+          description: 読書ステータス（'1':積読、'2':読書中、'3':読了）
+        overallRating:
+          type: number
+          description: 総合評価（1.0-5.0、0.5単位）
+        clarityRating:
+          type: number
+          description: 分かりやすさ評価（1.0-5.0、0.5単位）
+        utilityRating:
+          type: number
+          description: 実用性評価（1.0-5.0、0.5単位）
+        bookSummary:
+          type: string
+          description: 本の概要（ユーザー入力）
+        content:
+          type: string
+          description: ナレッジタンク内容
+        hashtags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hashtag'
+        knowledgeHashtags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hashtag'
+        bookInfo:
+          allOf:
+            - $ref: '#/components/schemas/BookInfo'
+          description: 書籍基本情報
+        createdAt:
+          type: string
+          description: 作成日時
+        updatedAt:
+          type: string
+          description: 更新日時
+
+    ReadingStats:
+      type: object
+      properties:
+        totalBooks:
+          type: number
+          description: 登録本数
+        totalBookshelves:
+          type: number
+          description: 本棚数
+        totalCategories:
+          type: number
+          description: カテゴリ数
+        finishedBooks:
+          type: number
+          description: 読了数
+        readingBooks:
+          type: number
+          description: 読書中数
+        tsundokuBooks:
+          type: number
+          description: 積読数
+        avgRating:
+          type: number
+          description: 平均評価
+        totalKnowledgeTanks:
+          type: number
+          description: 総ナレッジタンク数
+
+    BookshelfWithUser:
+      type: object
+      properties:
+        bookshelfId:
+          type: number
+          description: 本棚ID
+        bookshelfName:
+          type: string
+          description: 本棚名
+        description:
+          type: string
+          description: 本棚説明
+        categoryCount:
+          type: number
+          description: カテゴリ数
+        bookCount:
+          type: number
+          description: 本数
+        lastUpdated:
+          type: string
+          description: 最終更新日時
+        userProfile:
+          allOf:
+            - $ref: '#/components/schemas/UserProfile'
+          description: 本棚所有者のプロフィール
+        thumbnailBooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThumbnailBook'
+        popularCategories:
+          type: array
+          items:
+            $ref: '#/components/schemas/PopularCategory'
+
+    TrendingCategory:
+      type: object
+      properties:
+        categoryId:
+          type: number
+          description: カテゴリID
+        categoryName:
+          type: string
+          description: カテゴリ名
+        usageCount:
+          type: number
+          description: 使用回数
+        growthRate:
+          type: number
+          description: 成長率（前週比など）
+
+    FollowStatus:
+      type: object
+      properties:
+        isFollowing:
+          type: string
+          description: フォロー状況（'true':フォロー中、'false':フォローしていない）
+        followedAt:
+          type: string
+          description: フォロー開始日時
+
+    FollowInfo:
+      type: object
+      properties:
+        followId:
+          type: number
+          description: フォローID
+        followerUserId:
+          type: string
+          description: フォローするユーザーID
+        followedUserId:
+          type: string
+          description: フォローされるユーザーID
+        displayName:
+          type: string
+          description: 表示名
+        iconImagePath:
+          type: string
+          description: アイコン画像パス
+        followedAt:
+          type: string
+          description: フォロー開始日時
+
+    TotalCounts:
+      type: object
+      properties:
+        totalBooks:
+          type: number
+          description: 総本数
+        totalBookshelves:
+          type: number
+          description: 総本棚数
+        totalKnowledgeTanks:
+          type: number
+          description: 総ナレッジタンク数
+
+    BookRatingStats:
+      type: object
+      properties:
+        reviewCount:
+          type: number
+          description: レビュー数
+        avgOverallRating:
+          type: number
+          description: 平均総合評価
+        avgClarityRating:
+          type: number
+          description: 平均分かりやすさ評価
+        avgUtilityRating:
+          type: number
+          description: 平均実用性評価
+
+    PrivacySettings:
+      type: object
+      properties:
+        bookshelfPublicFlg:
+          type: string
+          description: 本棚公開フラグ
+        recommendDisplayFlg:
+          type: string
+          description: おすすめ表示フラグ
+        tsundokuPublicFlg:
+          type: string
+          description: 積読棚公開フラグ
+
+    Activity:
+      type: object
+      properties:
+        type:
+          type: string
+          description: 活動種別（book_added/reading_status_changed/knowledge_tank_created等）
+        description:
+          type: string
+          description: 活動説明
+        relatedBookInfo:
+          allOf:
+            - $ref: '#/components/schemas/BookInfo'
+          description: 関連書籍情報
+        createdAt:
+          type: string
+          description: 活動日時
+
+    ThumbnailBook:
+      type: object
+      properties:
+        isbn:
+          type: string
+          description: ISBN
+        title:
+          type: string
+          description: 書籍タイトル
+        author:
+          type: string
+          description: 著者名
+        thumbnailUrl:
+          type: string
+          description: 書影URL
+
+    PopularCategory:
+      type: object
+      properties:
+        categoryId:
+          type: number
+          description: カテゴリID
+        categoryName:
+          type: string
+          description: カテゴリ名
+        bookCount:
+          type: number
+          description: そのカテゴリの本数
+
+    CategoryMaster:
+      type: object
+      properties:
+        categoryId:
+          type: number
+          description: カテゴリID
+        categoryName:
+          type: string
+          description: カテゴリ名
+        systemFlg:
+          type: string
+          description: システムフラグ（'0':ユーザー作成、'1':システム標準）
+
+    PersonalizedRecommendation:
+      type: object
+      properties:
+        bookInfo:
+          allOf:
+            - $ref: '#/components/schemas/BookInfo'
+          description: 書籍情報
+        score:
+          type: number
+          description: レコメンドスコア（1.0-5.0）
+        reason:
+          type: string
+          description: レコメンド理由
+
+    Hashtag:
+      type: object
+      properties:
+        hashtagId:
+          type: number
+          description: ハッシュタグID
+        hashtagName:
+          type: string
+          description: ハッシュタグ名
+        usageCount:
+          type: number
+          description: 使用回数（本・ナレッジタンク統合）
+        systemFlg:
+          type: string
+          description: システムフラグ（'0':ユーザー作成、'1':システム標準）
+
+    CategorySuggestion:
+      type: object
+      properties:
+        categoryId:
+          type: number
+          description: カテゴリID
+        categoryName:
+          type: string
+          description: カテゴリ名
+        usageCount:
+          type: number
+          description: 使用回数
+        systemFlg:
+          type: string
+          description: システムフラグ（'0':ユーザー作成、'1':システム標準）
+        matchType:
+          type: string
+          description: マッチタイプ（'prefix':前方一致、'partial':部分一致）
+        isExactMatch:
+          type: string
+          description: 完全一致かどうか（'true':完全一致、'false':部分一致）
+
+    HashtagSuggestion:
+      type: object
+      properties:
+        hashtagId:
+          type: number
+          description: ハッシュタグID
+        hashtagName:
+          type: string
+          description: ハッシュタグ名
+        usageCount:
+          type: number
+          description: 使用回数（本・ナレッジタンク統合）
+        systemFlg:
+          type: string
+          description: システムフラグ（'0':ユーザー作成、'1':システム標準）
+        matchType:
+          type: string
+          description: マッチタイプ（'prefix':前方一致、'partial':部分一致）
+        isExactMatch:
+          type: string
+          description: 完全一致かどうか（'true':完全一致、'false':部分一致）
+        recentUsageCount:
+          type: number
+          description: 最近1ヶ月の使用回数

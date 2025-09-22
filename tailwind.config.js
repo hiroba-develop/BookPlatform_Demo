@@ -1,25 +1,31 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Noto Sans JP"', "sans-serif"],
+        sans: ['"Merriweather"', "sans-serif"],
+        serif: ['"EB Garamond"', "serif"],
       },
       colors: {
-        primary: "#67BACA",
-        accent: "#FE0000",
-        sub1: "#B3DBC0",
-        sub2: "#FDF6F6",
-        background: "#FFFFFF",
-        text: "#333333",
-        border: "#E0E0E0",
-        success: "#4CAF50",
-        warning: "#FFA726",
-        info: "#2196F3",
-        error: "#D32F2F",
+        'primary': '#5D4037',      // 濃い茶色
+        'accent': '#C89B3F',       // 金色
+        'background': '#F5EFE6',   // 羊皮紙
+        'muted': '#E0DACE',       // 背景より少し濃い
+        'main': '#1A1A1A',         // ほぼ黒
+        'text-secondary': '#6B4F4F',// 少し赤みがかった茶色
+
+        'white': '#FFFFFF',
+        'border': '#D7CFC3',       // ボーダー
+        'success': '#4CAF50',
+        'warning': '#FFA726',
+        'info': '#2196F3',
+        'error': '#D32F2F',
       },
     },
   },
-  plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")],
+  plugins: [],
 };

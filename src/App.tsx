@@ -1,133 +1,40 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
-import Dashboard from "./pages/Dashboard";
-import Sample from "./pages/Sample";
-import Settings from "./pages/Settings";
+import Home from "./pages/Home";
 import Login from "./pages/Login";
-import { useEffect } from "react";
-
-// 認証が必要なページをラップするコンポーネント
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const { user, isLoading, shouldRedirectToLogin } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-          <p className="text-gray-600">読み込み中...</p>
-          <p className="text-sm text-blue-600 mt-2">(デモモード)</p>
-        </div>
-      </div>
-    );
-  }
-
-  // cookieに「userId」キーが無い場合は、必ずlogin画面に遷移
-  if (shouldRedirectToLogin) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // ユーザーが存在しない場合はログイン画面に遷移
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-// メインアプリケーションコンポーネント
-const AppContent: React.FC = () => {
-  // 検索エンジンボット対策の強化
-  useEffect(() => {
-    // User-Agentベースでのボット検出
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isBot = /bot|crawler|spider|crawling/i.test(userAgent);
-
-    if (isBot) {
-      // ボットの場合は空のページを表示
-      document.body.innerHTML = `
-        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif;">
-          <div style="text-align: center;">
-            <h1>会員限定サイト</h1>
-            <p>このサイトは会員限定です。</p>
-            <p>アクセスには認証が必要です。</p>
-          </div>
-        </div>
-      `;
-      return;
-    }
-
-    // メタタグの動的追加（念のため）
-    const metaRobots = document.querySelector('meta[name="robots"]');
-    if (!metaRobots) {
-      const meta = document.createElement("meta");
-      meta.name = "robots";
-      meta.content = "noindex, nofollow, noarchive, nosnippet, noimageindex";
-      document.head.appendChild(meta);
-    }
-
-    // デモモード用のページタイトル設定
-    document.title = "サンプルアプリ - ログイン認証デモ";
-  }, []);
-
-  return (
-    <Routes>
-      {/* ログイン画面 */}
-      <Route path="/login" element={<Login />} />
-
-      {/* 認証が必要なページ */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Dashboard />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/sample"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Sample />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Settings />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
-  );
-};
+import MyBookshelf from "./pages/MyBookshelf";
+import BrowseBookshelves from "./pages/BrowseBookshelves";
+import BookDetail from "./pages/BookDetail";
+import SignUp from "./pages/SignUp";
+import TagSearch from "./pages/TagSearch";
+import Profile from "./pages/Profile";
+import PrivateRoute from "./components/PrivateRoute";
+import UserProfile from "./pages/UserProfile";
+import { BookshelfProvider } from "./contexts/BookshelfContext";
+import Search from "./pages/Search";
 
 function App() {
-  // Viteのベースパスを取得
   const basename = import.meta.env.BASE_URL;
 
   return (
-    <AuthProvider>
-      <Router basename={basename}>
-        <AppContent />
-      </Router>
-    </AuthProvider>
+    <BrowserRouter basename={basename}>
+      <BookshelfProvider>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="my-bookshelf" element={<PrivateRoute><MyBookshelf /></PrivateRoute>} />
+            <Route path="browse" element={<BrowseBookshelves />} />
+            <Route path="book/:id" element={<BookDetail />} />
+            <Route path="signup" element={<SignUp />} />
+            <Route path="login" element={<Login />} />
+            <Route path="tags" element={<TagSearch />} />
+            <Route path="search" element={<Search />} />
+            <Route path="profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+            <Route path="users/:userId" element={<UserProfile />} />
+          </Route>
+        </Routes>
+      </BookshelfProvider>
+    </BrowserRouter>
   );
 }
 

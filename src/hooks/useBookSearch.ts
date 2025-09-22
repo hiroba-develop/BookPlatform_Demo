@@ -1,0 +1,273 @@
+import { useState, useCallback } from 'react';
+import axios from 'axios';
+import type { Book } from '../types';
+
+export type SearchType = 'keyword' | 'isbn';
+
+type KeywordQuery = {
+  title?: string;
+  author?: string;
+  publisher?: string;
+};
+
+// ISBN10をISBN13に変換する関数
+const convertIsbn10To13 = (isbn10: string): string => {
+  if (isbn10.length !== 10) return isbn10;
+  const isbn = '978' + isbn10.slice(0, 9);
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    const digit = parseInt(isbn[i]);
+    sum += i % 2 === 0 ? digit : digit * 3;
+  }
+  const checkDigit = (10 - (sum % 10)) % 10;
+  return isbn + checkDigit;
+};
+
+
+const useBookSearch = () => {
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const parseSruResponse = useCallback((
+    xmlDoc: Document,
+    searchType: SearchType,
+    query: string | KeywordQuery
+  ): Book[] => {
+    const DC_NS = 'http://purl.org/dc/elements/1.1/';
+    const DCTERMS_NS = 'http://purl.org/dc/terms/';
+    const RDF_NS = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+    const SRW_NS = 'http://www.loc.gov/zing/srw/';
+		const SRW_DC_NS = 'info:srw/schema/1/dc-v1.1';
+
+    const mapRecordToBook = (container: Element) => {
+      const getNode = (ns: string, tag: string) => container.getElementsByTagNameNS(ns, tag)[0]?.textContent || '';
+      
+      const title = (getNode(DC_NS, 'title') || '').replace(/\s+/g, ' ').trim();
+      const author = getNode(DC_NS, 'creator');
+      const publisher = getNode(DC_NS, 'publisher');
+      const pubDate = getNode(DCTERMS_NS, 'issued') || getNode(DC_NS, 'date');
+      const description = getNode(DC_NS, 'description') || '概要なし';
+
+      const extractIsbnFromContainer = (root: Element): string => {
+        const typed = root.getElementsByTagNameNS(DCTERMS_NS, 'identifier');
+        for (const id of Array.from(typed)) {
+          const dtype = id.getAttributeNS(RDF_NS, 'datatype');
+          if (dtype && dtype.includes('ISBN')) {
+            const raw = (id.textContent || '').trim();
+            if (raw) return raw;
+          }
+        }
+        const dcIds = root.getElementsByTagNameNS(DC_NS, 'identifier');
+        for (const id of Array.from(dcIds)) {
+          const raw = (id.textContent || '').trim();
+          if (!raw) continue;
+          const found = raw.replace(/[\s\u3000]/g, '');
+          const m13 = found.replace(/[\-‐‑‒–—―ー]/g, '').match(/97[89]\d{10}/);
+          if (m13) return m13[0];
+          const m10 = found.replace(/[\-‐‑‒–—―ー]/g, '').match(/\d{9}[\dXx]/);
+          if (m10) return m10[0];
+        }
+        const descs = root.getElementsByTagNameNS(DC_NS, 'description');
+        for (const d of Array.from(descs)) {
+          const text = (d.textContent || '').replace(/[\-‐‑‒–—―ー]/g, '');
+          const m13 = text.match(/97[89]\d{10}/);
+          if (m13) return m13[0];
+          const m10 = text.match(/\b\d{9}[\dXx]\b/);
+          if (m10) return m10[0];
+        }
+        return '';
+      };
+
+      let isbn = extractIsbnFromContainer(container);
+      let cleanIsbn = '';
+
+      if (searchType === 'isbn' && typeof query === 'string') {
+        cleanIsbn = (query || '').replace(/-/g, '');
+      } else {
+        cleanIsbn = (isbn || '').replace(/-/g, '');
+      }
+      
+      if (cleanIsbn.length === 10) {
+        cleanIsbn = convertIsbn10To13(cleanIsbn);
+      }
+      
+      const imageUrl = cleanIsbn ? `https://ndlsearch.ndl.go.jp/thumbnail/${cleanIsbn}.jpg` : 'https://dummyimage.com/150x220/e0e0e0/aaa.png&text=No+Image';
+      const link = '';
+      const bookId = cleanIsbn || title;
+
+      return { id: bookId, isbn: cleanIsbn, title, author, publisher, pubDate, imageUrl, description, link } as Book;
+    };
+
+    let records = Array.from(xmlDoc.getElementsByTagNameNS(SRW_NS, 'record'));
+    if (records.length > 0) {
+        return records.map(mapRecordToBook).filter(b => b.title);
+    }
+    
+    // Fallback for srw_dc:dc containers
+    let dcContainers = Array.from(xmlDoc.getElementsByTagNameNS(SRW_DC_NS, 'dc'));
+    if (dcContainers.length > 0) {
+        return dcContainers.map(mapRecordToBook).filter(b => b.title);
+    }
+    
+    return [];
+  }, []);
+
+  const executeSearch = useCallback(async (
+    cql: string, 
+    searchType: SearchType, 
+    originalQuery: string | KeywordQuery
+  ): Promise<Book[]> => {
+    const baseParams = {
+      operation: 'searchRetrieve',
+      version: '1.2',
+      recordSchema: 'dcndl',
+      onlyBib: 'true',
+      recordPacking: 'xml',
+      maximumRecords: 20,
+    };
+    
+    const parser = new DOMParser();
+    const SRW_NS = 'http://www.loc.gov/zing/srw/';
+    const DIAG_NS = 'http://www.loc.gov/zing/srw/diagnostic/';
+
+    const requestWithQuery = async (queryCql: string, schema: string = 'dcndl') => {
+      const res = await axios.get('/api/api/sru', { 
+        params: { ...baseParams, query: queryCql, recordSchema: schema }, 
+        responseType: 'text' 
+      });
+      return parser.parseFromString(res.data, 'text/xml');
+    };
+    
+    const hasDiagnostics = (doc: Document) => doc.getElementsByTagNameNS(SRW_NS, 'diagnostics').length > 0;
+    const countRecords = (doc: Document) => parseInt(doc.getElementsByTagNameNS(SRW_NS, 'numberOfRecords')[0]?.textContent || '0', 10);
+
+    let xmlDoc = await requestWithQuery(cql);
+    let lastQueryCql = cql;
+
+    // Fallback logic for diagnostics or zero results
+    if (hasDiagnostics(xmlDoc) || countRecords(xmlDoc) === 0) {
+      const details = xmlDoc.getElementsByTagNameNS(DIAG_NS, 'details')[0]?.textContent;
+      console.warn(`[SRU] Initial query failed or returned 0 results. Details: ${details || 'N/A'}. Starting fallbacks.`);
+
+      const fallbacks = searchType === 'isbn' && typeof originalQuery === 'string'
+        ? [`dcterms.identifier all "${originalQuery}"`, `identifier all "${originalQuery}"`]
+        : typeof originalQuery === 'object' && originalQuery.title
+        ? [`title any "${originalQuery.title}"`, `creator any "${originalQuery.author || ''}"`, `subject any "${originalQuery.title}"`]
+        : [];
+      
+      for (const fallbackCql of fallbacks) {
+        const candDoc = await requestWithQuery(fallbackCql);
+        if (!hasDiagnostics(candDoc) && countRecords(candDoc) > 0) {
+          xmlDoc = candDoc;
+          lastQueryCql = fallbackCql;
+          console.debug(`[SRU] Fallback successful with query: ${fallbackCql}`);
+          break;
+        }
+      }
+    }
+    
+    // If we still have an error, return empty
+    if (hasDiagnostics(xmlDoc)) {
+      const details = xmlDoc.getElementsByTagNameNS(DIAG_NS, 'details')[0]?.textContent;
+      setError(`APIエラー: ${details || '検索に失敗しました'}`);
+      return [];
+    }
+
+    // If we finally got results, try to get the richer schema if we aren't already using it
+    if (countRecords(xmlDoc) > 0 && xmlDoc.documentElement.getAttribute('recordSchema') !== 'dcndl') {
+        try {
+            const dcndlDoc = await requestWithQuery(lastQueryCql, 'dcndl');
+            if (!hasDiagnostics(dcndlDoc) && countRecords(dcndlDoc) > 0) {
+                xmlDoc = dcndlDoc;
+            }
+        } catch (_) { /* Skip if it fails */ }
+    }
+
+    return parseSruResponse(xmlDoc, searchType, originalQuery);
+
+  }, [parseSruResponse]);
+
+  const searchBooks = useCallback(async (query: string | KeywordQuery, searchType: SearchType = 'keyword') => {
+    if (!query || (typeof query === 'object' && !query.title && !query.author && !query.publisher)) {
+      setBooks([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setBooks([]);
+
+    try {
+      let finalBooks: Book[] = [];
+
+      if (searchType === 'keyword' && typeof query === 'object') {
+        const { title, author, publisher } = query;
+
+        const queryParts: string[] = [];
+        if (title) queryParts.push(`title all "${title}"`);
+        if (author) queryParts.push(`creator any "${author}"`);
+        if (publisher) queryParts.push(`publisher all "${publisher}"`);
+        
+        const cql = queryParts.join(' and ');
+        
+        if (cql) {
+          finalBooks = await executeSearch(cql, searchType, query);
+        }
+
+        // Enforce strict author filtering on client side
+        if (author) {
+          const normalize = (s: string) => (s || '').toLowerCase().replace(/[\s\u3000,，、・\[\](){}『』「」]/g, '');
+          const tokens = author.split(/[\s\u3000,，、・]+/).filter(Boolean).map(normalize);
+          finalBooks = finalBooks.filter(b => {
+            const normAuthor = normalize(b.author);
+            return tokens.every(t => normAuthor.includes(t));
+          });
+        }
+
+      } else if (searchType === 'isbn' && typeof query === 'string') {
+        const cql = `isbn="${query}"`;
+        finalBooks = await executeSearch(cql, searchType, query);
+      }
+
+      const bookGroups = new Map<string, Book[]>();
+      for (const book of finalBooks) {
+        // Normalize title: take content before the first slash, trim whitespace.
+        const normalizedTitle = (book.title || '').split('/')[0].trim();
+        // Normalize author: remove all whitespace and common separators.
+        const normalizedAuthor = (book.author || '').replace(/[\s,;著編訳]/g, '');
+
+        const key = `${normalizedTitle}|${normalizedAuthor}`;
+        if (!bookGroups.has(key)) {
+          bookGroups.set(key, []);
+        }
+        bookGroups.get(key)!.push(book);
+      }
+
+      const uniqueBooks: Book[] = [];
+      for (const group of bookGroups.values()) {
+        // Prioritize the entry with an ISBN, otherwise take the first one.
+        const bestBook = group.find(b => b.isbn) || group[0];
+        uniqueBooks.push(bestBook);
+      }
+      
+      if (uniqueBooks.length === 0) {
+        setError('該当する書籍が見つかりませんでした。');
+      }
+      setBooks(uniqueBooks);
+
+    } catch (err) {
+      setError('書籍の検索中にエラーが発生しました。');
+      console.error(err);
+      if (axios.isAxiosError(err)) {
+        console.error('Axios error:', err.response?.data);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [executeSearch]);
+
+  return { books, loading, error, searchBooks };
+};
+
+export default useBookSearch;

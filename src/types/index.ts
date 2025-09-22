@@ -66,11 +66,15 @@ export interface FAQ {
 export interface UserProfile {
   id: string;
   name: string;
-  email: string;
-  company: string;
-  phone: string;
-  createdAt: Date;
-  lastLogin: Date;
+  avatarUrl: string;
+  stats: {
+    posts: number;
+    followers: number;
+    following: number;
+    likes: number;
+  };
+  bookshelves: Bookshelf[];
+  tsundoku: UserBook[];
 }
 
 // 設定関連の型定義
@@ -342,4 +346,53 @@ export interface UserRankingData {
   earnedBadges: Badge[];
   recentAwards: Award[];
   benchmarkData: BenchmarkData;
+}
+
+export interface Book {
+  id: string;
+  isbn?: string; // ISBNを追加
+  title: string;
+  author: string;
+  publisher: string;
+  pubDate: string;
+  imageUrl: string;
+  description: string;
+  link: string;
+}
+
+export interface UserBookRating {
+  overall: number;
+  difficulty: number;
+  practicality: number;
+}
+
+export interface UserBook {
+  id: string;
+  title: string;
+  author: string;
+  isbn: string;
+  status: '読了' | '読んでる' | '積読';
+  rating?: number;
+  userTags?: Tag[];
+  impression?: string;
+  readDate?: string;
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+}
+
+export interface BookCategory {
+  id: string;
+  name: string;
+  books: UserBook[];
+}
+
+export interface Bookshelf {
+  id: string;
+  title: string;
+  tags: Tag[];
+  categories: BookCategory[];
+  visibility: 'public' | 'private';
 }
