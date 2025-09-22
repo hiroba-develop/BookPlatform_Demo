@@ -146,8 +146,8 @@ const useBookSearch = () => {
           `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
           `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
           `https://cors.bridged.cc/?${encodeURIComponent(targetUrl)}`,
-          `https://thingproxy.freeboard.io/fetch/${targetUrl}`,
-          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
+          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+          `https://thingproxy.freeboard.io/fetch/${targetUrl}`
         ];
         
         let lastError;
@@ -157,13 +157,22 @@ const useBookSearch = () => {
             console.log('Trying proxy:', proxyUrl);
             console.log('Request params:', requestParams);
             
-            const res = await axios.get(proxyUrl, { 
-              params: requestParams, 
+            // URLパラメータを手動で構築してより確実に送信
+            const urlParams = new URLSearchParams();
+            Object.entries(requestParams).forEach(([key, value]) => {
+              if (value !== undefined && value !== null) {
+                urlParams.append(key, String(value));
+              }
+            });
+            
+            const fullUrl = `${proxyUrl}${proxyUrl.includes('?') ? '&' : '?'}${urlParams.toString()}`;
+            console.log('Full URL:', fullUrl);
+            
+            const res = await axios.get(fullUrl, { 
               responseType: 'text',
               timeout: 10000,
               headers: {
-                'Accept': 'application/xml, text/xml, */*',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                'Accept': 'application/xml, text/xml, */*'
               },
               withCredentials: false,
               validateStatus: (status) => status < 500 // 4xxエラーは再試行しない
