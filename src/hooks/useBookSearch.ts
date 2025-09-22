@@ -124,7 +124,8 @@ const useBookSearch = () => {
       recordSchema: 'dcndl',
       onlyBib: 'true',
       recordPacking: 'xml',
-      maximumRecords: 10, // 件数を減らして確実性を向上
+      maximumRecords: 5, // 件数をさらに減らして確実性を向上
+      startRecord: 1, // 開始レコードを明示的に指定
     };
     
     const parser = new DOMParser();
@@ -169,9 +170,23 @@ const useBookSearch = () => {
             console.log('Success with proxy:', proxyUrl);
             console.log('Response status:', res.status);
             console.log('Response data length:', res.data.length);
+            console.log('Raw response data:', res.data.substring(0, 500)); // 最初の500文字を表示
             
             const xmlDoc = parser.parseFromString(res.data, 'text/xml');
             console.log('Parsed XML document:', xmlDoc);
+            
+            // XMLの内容をより詳細に解析
+            const diagnostics = xmlDoc.getElementsByTagNameNS('http://www.loc.gov/zing/srw/diagnostic/', 'diagnostic');
+            if (diagnostics.length > 0) {
+              console.log('Diagnostic information:');
+              for (let i = 0; i < diagnostics.length; i++) {
+                const diagnostic = diagnostics[i];
+                const message = diagnostic.getElementsByTagNameNS('http://www.loc.gov/zing/srw/diagnostic/', 'message')[0]?.textContent;
+                const details = diagnostic.getElementsByTagNameNS('http://www.loc.gov/zing/srw/diagnostic/', 'details')[0]?.textContent;
+                console.log(`Diagnostic ${i + 1}:`, { message, details });
+              }
+            }
+            
             return xmlDoc;
           } catch (error) {
             console.log('Failed with proxy:', proxyUrl, error instanceof Error ? error.message : 'Unknown error');
@@ -234,14 +249,14 @@ const useBookSearch = () => {
       const fallbacks = searchType === 'isbn' && typeof originalQuery === 'string'
         ? [
             `isbn="${originalQuery}"`,
-            `title all "${originalQuery}"`,
-            `creator any "${originalQuery}"`
+            `title="${originalQuery}"`,
+            `creator="${originalQuery}"`
           ]
         : typeof originalQuery === 'object' && originalQuery.title
         ? [
-            `title all "${originalQuery.title}"`,
-            `creator any "${originalQuery.author || ''}"`,
-            `publisher all "${originalQuery.publisher || ''}"`
+            `title="${originalQuery.title}"`,
+            `creator="${originalQuery.author || ''}"`,
+            `publisher="${originalQuery.publisher || ''}"`
           ]
         : [];
       
@@ -305,23 +320,24 @@ const useBookSearch = () => {
       if (searchType === 'keyword' && typeof query === 'object') {
         const { title, author, publisher } = query;
 
-        // NDLのSRU APIに適したCQL形式を使用
-        const searchQueries = [];
+        // NDLのSRU APIに適したCQL形式を使用（より基本的な形式）
+        let cql = '';
         
         if (title) {
-          searchQueries.push(`title all "${title}"`);
-        }
-        if (author) {
-          searchQueries.push(`creator any "${author}"`);
-        }
-        if (publisher) {
-          searchQueries.push(`publisher all "${publisher}"`);
+          // タイトル検索（最も基本的な形式）
+          cql = `title="${title}"`;
+        } else if (author) {
+          // 著者検索
+          cql = `creator="${author}"`;
+        } else if (publisher) {
+          // 出版社検索
+          cql = `publisher="${publisher}"`;
+        } else {
+          // フォールバック
+          cql = `title="book"`;
         }
         
-        // 複数の検索条件を組み合わせる
-        const cql = searchQueries.length > 0 ? searchQueries.join(' and ') : `title all "book"`;
-        
-        console.log('Search query:', { title, author, publisher, cql, searchQueries });
+        console.log('Search query:', { title, author, publisher, cql });
         
         if (cql) {
           finalBooks = await executeSearch(cql, searchType, query);
