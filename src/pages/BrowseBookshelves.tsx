@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { mockUsers } from '../data/mockUsers';
+import { useHashtagClick } from '../hooks/useHashtagClick';
 
 const BrowseBookshelves: React.FC = () => {
   const otherUsers = mockUsers.filter(user => user.id !== 'demo-user-id');
+  const { handleHashtagClick } = useHashtagClick();
 
   return (
     <div className="container mx-auto">
@@ -36,7 +38,11 @@ const BrowseBookshelves: React.FC = () => {
                 <h3 className="text-sm font-semibold mb-2 text-gray-600">本棚のカテゴリ</h3>
                 <div className="flex flex-wrap gap-2">
                   {uniqueTags.slice(0, 5).map(tag => (
-                    <span key={tag.id} className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-full">
+                    <span 
+                      key={tag.id} 
+                      className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-full cursor-pointer hover:bg-gray-300 transition-colors"
+                      onClick={() => handleHashtagClick(tag.name)}
+                    >
                       #{tag.name}
                     </span>
                   ))}

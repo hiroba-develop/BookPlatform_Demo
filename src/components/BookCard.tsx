@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { UserBook, Tag } from '../types';
+import { useHashtagClick } from '../hooks/useHashtagClick';
 
 interface BookCardProps {
   id: string;
@@ -33,6 +34,7 @@ const normalizeIsbn13 = (raw?: string): string | undefined => {
 };
 
 const BookCard: React.FC<BookCardProps> = ({ id, isbn, title, author, tags, imageUrl }) => {
+  const { handleHashtagClick } = useHashtagClick();
   const fallbackImageUrl = 'https://dummyimage.com/150x220/e0e0e0/aaa.png&text=No+Image';
 
   const normalizedIsbn13 = useMemo(() => normalizeIsbn13(isbn), [isbn]);
@@ -93,7 +95,11 @@ const BookCard: React.FC<BookCardProps> = ({ id, isbn, title, author, tags, imag
         {tags && tags.length > 0 && (
           <div className="mt-2 flex flex-wrap items-center gap-1">
             {tags.slice(0, 2).map((tag, index) => (
-              <span key={tag.id} className={`text-xs bg-background text-main px-2 py-0.5 rounded-full truncate ${index === 0 ? 'max-w-[calc(100%-3rem)]' : ''}`}>
+              <span 
+                key={tag.id} 
+                className={`text-xs bg-background text-main px-2 py-0.5 rounded-full truncate cursor-pointer hover:bg-gray-200 transition-colors ${index === 0 ? 'max-w-[calc(100%-3rem)]' : ''}`}
+                onClick={() => handleHashtagClick(tag.name)}
+              >
                 #{tag.name}
               </span>
             ))}

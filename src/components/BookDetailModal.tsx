@@ -1,6 +1,7 @@
 import React from 'react';
 import type { UserBook } from '../types';
 import { XMarkIcon, StarIcon } from '@heroicons/react/24/solid';
+import { useHashtagClick } from '../hooks/useHashtagClick';
 
 interface BookDetailModalProps {
   isOpen: boolean;
@@ -23,6 +24,8 @@ const ReadOnlyStarRating: React.FC<{ rating: number; label: string }> = ({ ratin
 );
 
 const BookDetailModal: React.FC<BookDetailModalProps> = ({ isOpen, onClose, book }) => {
+  const { handleHashtagClick } = useHashtagClick();
+  
   if (!isOpen || !book) return null;
 
   return (
@@ -60,7 +63,13 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({ isOpen, onClose, book
                 <h4 className="font-semibold text-gray-700 mb-2 text-sm sm:text-base">タグ</h4>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {book.userTags.map(tag => (
-                    <span key={tag.id} className="bg-muted text-text-secondary px-2 py-1 rounded-full text-xs">#{tag.name}</span>
+                    <span 
+                      key={tag.id} 
+                      className="bg-muted text-text-secondary px-2 py-1 rounded-full text-xs cursor-pointer hover:bg-gray-300 transition-colors"
+                      onClick={() => handleHashtagClick(tag.name)}
+                    >
+                      #{tag.name}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -91,7 +100,13 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({ isOpen, onClose, book
                 {book.knowledgeTankTags && book.knowledgeTankTags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
                     {book.knowledgeTankTags.map(tag => (
-                      <span key={tag.id} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">#{tag.name}</span>
+                      <span 
+                        key={tag.id} 
+                        className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs cursor-pointer hover:bg-blue-200 transition-colors"
+                        onClick={() => handleHashtagClick(tag.name)}
+                      >
+                        #{tag.name}
+                      </span>
                     ))}
                   </div>
                 )}

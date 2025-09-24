@@ -4,6 +4,17 @@ import type { Book } from '../types';
 
 export type SearchType = 'keyword' | 'isbn';
 
+type SearchResult = {
+  books: Book[];
+  isNetworkError: boolean;
+  errorMessage?: string;
+};
+
+type SearchError = {
+  message: string;
+  isNoResults: boolean;
+};
+
 type KeywordQuery = {
   title?: string;
   author?: string;
@@ -27,7 +38,7 @@ const convertIsbn10To13 = (isbn10: string): string => {
 const useBookSearch = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<SearchError | null>(null);
 
   const parseSruResponse = useCallback((
     xmlDoc: Document,
@@ -117,7 +128,7 @@ const useBookSearch = () => {
     cql: string, 
     searchType: SearchType, 
     originalQuery: string | KeywordQuery
-  ): Promise<Book[]> => {
+  ): Promise<SearchResult> => {
     const baseParams = {
       operation: 'searchRetrieve',
       version: '1.2',
@@ -351,12 +362,15 @@ const useBookSearch = () => {
       }
     }
     
-    // If we still have an error, return empty
+    // If we still have an error, return empty with network error flag
     if (hasDiagnostics(xmlDoc)) {
       const details = xmlDoc.getElementsByTagNameNS(DIAG_NS, 'details')[0]?.textContent;
       console.error(`[SRU] All queries failed. Details: ${details || 'Unknown error'}`);
-      setError(`検索に失敗しました。しばらく待ってから再試行してください。`);
-      return [];
+      return {
+        books: [],
+        isNetworkError: true,
+        errorMessage: `検索に失敗しました。しばらく待ってから再試行してください。`
+      };
     }
 
     // If we finally got results, try to get the richer schema if we aren't already using it
@@ -369,7 +383,11 @@ const useBookSearch = () => {
         } catch (_) { /* Skip if it fails */ }
     }
 
-    return parseSruResponse(xmlDoc, searchType, originalQuery);
+    const books = parseSruResponse(xmlDoc, searchType, originalQuery);
+    return {
+      books,
+      isNetworkError: false
+    };
 
   }, [parseSruResponse]);
 
@@ -409,7 +427,15 @@ const useBookSearch = () => {
         console.log('Search query:', { title, author, publisher, cql });
         
         if (cql) {
-          finalBooks = await executeSearch(cql, searchType, query);
+          const searchResult = await executeSearch(cql, searchType, query);
+          if (searchResult.isNetworkError) {
+            setError({
+              message: searchResult.errorMessage || '検索に失敗しました。しばらく待ってから再試行してください。',
+              isNoResults: false
+            });
+            return;
+          }
+          finalBooks = searchResult.books;
         }
 
         // Enforce strict author filtering on client side
@@ -425,7 +451,15 @@ const useBookSearch = () => {
       } else if (searchType === 'isbn' && typeof query === 'string') {
         const cql = `isbn="${query}"`;
         console.log('ISBN search query:', { query, cql });
-        finalBooks = await executeSearch(cql, searchType, query);
+        const searchResult = await executeSearch(cql, searchType, query);
+        if (searchResult.isNetworkError) {
+          setError({
+            message: searchResult.errorMessage || '検索に失敗しました。しばらく待ってから再試行してください。',
+            isNoResults: false
+          });
+          return;
+        }
+        finalBooks = searchResult.books;
       }
 
       const bookGroups = new Map<string, Book[]>();
@@ -450,7 +484,10 @@ const useBookSearch = () => {
       }
       
       if (uniqueBooks.length === 0) {
-        setError('該当する書籍が見つかりませんでした。');
+        setError({
+          message: '該当する書籍が見つかりませんでした。検索条件を変更してお試しください。',
+          isNoResults: true
+        });
       }
       setBooks(uniqueBooks);
 
@@ -464,20 +501,41 @@ const useBookSearch = () => {
         });
         
         if (err.code === 'ERR_BLOCKED_BY_CLIENT' || err.message.includes('CORS')) {
-          setError('検索サービスにアクセスできません。ブラウザの設定を確認するか、しばらく待ってから再試行してください。');
+          setError({
+            message: '検索サービスにアクセスできません。ブラウザの設定を確認するか、しばらく待ってから再試行してください。',
+            isNoResults: false
+          });
         } else if (err.response?.status === 404) {
-          setError('検索サービスが見つかりません。しばらく待ってから再試行してください。');
+          setError({
+            message: '検索サービスが見つかりません。しばらく待ってから再試行してください。',
+            isNoResults: false
+          });
         } else if (err.response?.status && err.response.status >= 500) {
-          setError('検索サービスでエラーが発生しました。しばらく待ってから再試行してください。');
+          setError({
+            message: '検索サービスでエラーが発生しました。しばらく待ってから再試行してください。',
+            isNoResults: false
+          });
         } else if (err.message.includes('timeout')) {
-          setError('検索がタイムアウトしました。ネットワーク接続を確認してから再試行してください。');
+          setError({
+            message: '検索がタイムアウトしました。ネットワーク接続を確認してから再試行してください。',
+            isNoResults: false
+          });
         } else if (err.message.includes('Network Error')) {
-          setError('ネットワークエラーが発生しました。インターネット接続を確認してから再試行してください。');
+          setError({
+            message: 'ネットワークエラーが発生しました。インターネット接続を確認してから再試行してください。',
+            isNoResults: false
+          });
         } else {
-          setError(`書籍の検索中にエラーが発生しました: ${err.message}。しばらく待ってから再試行してください。`);
+          setError({
+            message: `書籍の検索中にエラーが発生しました: ${err.message}。しばらく待ってから再試行してください。`,
+            isNoResults: false
+          });
         }
       } else {
-        setError('書籍の検索中にエラーが発生しました。しばらく待ってから再試行してください。');
+        setError({
+          message: '書籍の検索中にエラーが発生しました。しばらく待ってから再試行してください。',
+          isNoResults: false
+        });
       }
     } finally {
       setLoading(false);

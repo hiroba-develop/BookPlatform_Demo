@@ -2,12 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { type UserBook } from '../types';
 import { StarIcon } from '@heroicons/react/24/solid';
+import { useHashtagClick } from '../hooks/useHashtagClick';
 
 interface UserBookDisplayProps {
   book: UserBook;
 }
 
 const UserBookDisplay: React.FC<UserBookDisplayProps> = ({ book }) => {
+  const { handleHashtagClick } = useHashtagClick();
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
     const halfStar = rating % 1 !== 0;
@@ -52,7 +54,15 @@ const UserBookDisplay: React.FC<UserBookDisplayProps> = ({ book }) => {
           
           {book.userTags && book.userTags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
-              {book.userTags.map(tag => <span key={tag.id} className="text-xs bg-gray-200 px-2 py-1 rounded-full">#{tag.name}</span>)}
+              {book.userTags.map(tag => (
+                <span 
+                  key={tag.id} 
+                  className="text-xs bg-gray-200 px-2 py-1 rounded-full cursor-pointer hover:bg-gray-300 transition-colors"
+                  onClick={() => handleHashtagClick(tag.name)}
+                >
+                  #{tag.name}
+                </span>
+              ))}
             </div>
           )}
         </div>

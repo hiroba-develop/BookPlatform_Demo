@@ -5,6 +5,7 @@ import type { MockUser } from '../data/mockUsers';
 import { useAuth } from '../contexts/AuthContext';
 import { useBookshelf } from '../contexts/BookshelfContext';
 import { useUsers } from '../hooks/useUsers';
+import { useHashtagClick } from '../hooks/useHashtagClick';
 
 interface Match {
   type: 'title' | 'author' | 'tag' | 'summary' | 'knowledge' | 'knowledgeTag';
@@ -46,6 +47,7 @@ const Search: React.FC = () => {
   const { user: currentUser } = useAuth();
   const { bookshelves: myBookshelves, tsundokuBooks: myTsundokuBooks } = useBookshelf();
   const [searchParams] = useSearchParams();
+  const { handleHashtagClick } = useHashtagClick();
   
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -201,7 +203,11 @@ const Search: React.FC = () => {
                         <p>
                           タグに一致: 
                           {result.book.userTags?.filter(t => t.name.toLowerCase().includes(query.toLowerCase())).map(t => (
-                            <span key={t.id} className="ml-1 inline-block bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                            <span 
+                              key={t.id} 
+                              className="ml-1 inline-block bg-green-100 text-green-800 px-2 py-0.5 rounded-full cursor-pointer hover:bg-green-200 transition-colors"
+                              onClick={() => handleHashtagClick(t.name)}
+                            >
                               <Highlight text={`#${t.name}`} highlight={query} />
                             </span>
                           ))}
@@ -211,7 +217,11 @@ const Search: React.FC = () => {
                         <p>
                           ナレッジタグに一致: 
                           {result.book.knowledgeTankTags?.filter(t => t.name.toLowerCase().includes(query.toLowerCase())).map(t => (
-                            <span key={t.id} className="ml-1 inline-block bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                            <span 
+                              key={t.id} 
+                              className="ml-1 inline-block bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full cursor-pointer hover:bg-blue-200 transition-colors"
+                              onClick={() => handleHashtagClick(t.name)}
+                            >
                               <Highlight text={`#${t.name}`} highlight={query} />
                             </span>
                           ))}
