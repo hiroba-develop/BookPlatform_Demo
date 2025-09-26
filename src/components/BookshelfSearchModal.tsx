@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import type { UserBook, Bookshelf } from '../types';
-import { Link } from 'react-router-dom';
 
 interface Match {
   type: 'title' | 'author' | 'tag' | 'summary' | 'knowledge' | 'knowledgeTag';
@@ -40,9 +39,10 @@ interface MyBookshelfSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
   bookshelves: Bookshelf[];
+  onSelectBook: (book: UserBook, shelfId: string, categoryId: string) => void;
 }
 
-const MyBookshelfSearchModal: React.FC<MyBookshelfSearchModalProps> = ({ isOpen, onClose, bookshelves }) => {
+const MyBookshelfSearchModal: React.FC<MyBookshelfSearchModalProps> = ({ isOpen, onClose, bookshelves, onSelectBook }) => {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 
@@ -133,9 +133,15 @@ const MyBookshelfSearchModal: React.FC<MyBookshelfSearchModalProps> = ({ isOpen,
               <p className="text-md font-semibold">{searchResults.length}件の検索結果</p>
               {searchResults.map((result, index) => (
                 <div key={`${result.book.id}-${index}`} className="bg-gray-50 p-4 rounded-md">
-                  <Link to={`/book/${result.book.id}`} className="text-lg font-bold text-primary hover:underline" onClick={handleClose}>
+                  <button 
+                    className="text-lg font-bold text-primary hover:underline text-left" 
+                    onClick={() => {
+                      onSelectBook(result.book, result.shelfId, result.categoryId);
+                      handleClose();
+                    }}
+                  >
                     <Highlight text={result.book.title} highlight={query} />
-                  </Link>
+                  </button>
                   <p className="text-sm text-gray-600">
                     著者: <Highlight text={result.book.author} highlight={query} />
                   </p>

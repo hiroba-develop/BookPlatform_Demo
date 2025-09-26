@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 import { mockUsers } from '../data/mockUsers';
 import BookCard from '../components/BookCard';
 import BookDetailModal from '../components/BookDetailModal';
@@ -8,11 +8,36 @@ import UserProfileHeader from '../components/UserProfileHeader';
 
 const UserProfile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
+  const location = useLocation();
   const user = mockUsers.find(u => u.id === userId);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [selectedBook, setSelectedBook] = useState<UserBook | null>(null);
 
   const bookshelves = user?.bookshelves || [];
+
+  useEffect(() => {
+    const hash = location.hash.substring(1);
+    if (hash) {
+      const params = new URLSearchParams(hash);
+      const bookId = params.get('bookId');
+      const shelfId = params.get('shelfId');
+      const categoryId = params.get('categoryId');
+
+      if (bookId && shelfId && categoryId && user) {
+        const shelf = user.bookshelves.find(s => s.id === shelfId);
+        if (shelf) {
+          const category = shelf.categories.find(c => c.id === categoryId);
+          if (category) {
+            const book = category.books.find(b => b.id === bookId);
+            if (book) {
+              setActiveTabId(shelfId);
+              setSelectedBook(book);
+            }
+          }
+        }
+      }
+    }
+  }, [location.hash, user]);
 
   const activeBookshelf = useMemo(() => {
     if (activeTabId) return bookshelves.find(shelf => shelf.id === activeTabId);

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import BookCard from '../components/BookCard';
 import { useBookshelf } from '../contexts/BookshelfContext';
 import type { Tag, UserBook, Bookshelf } from '../types';
@@ -29,7 +30,34 @@ const MyBookshelf: React.FC = () => {
   
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const { user: authUser } = useAuth();
+  const location = useLocation();
   const currentUser = useMemo(() => mockUsers.find(u => u.id === authUser?.id), [authUser]);
+
+  useEffect(() => {
+    const hash = location.hash.substring(1);
+    if (hash) {
+      const params = new URLSearchParams(hash);
+      const bookId = params.get('bookId');
+      const shelfId = params.get('shelfId');
+      const categoryId = params.get('categoryId');
+
+      if (bookId && shelfId && categoryId && currentUser) {
+        const shelf = bookshelves.find(s => s.id === shelfId);
+        if (shelf) {
+          const category = shelf.categories.find(c => c.id === categoryId);
+          if (category) {
+            const book = category.books.find(b => b.id === bookId);
+            if (book) {
+              setActiveTabId(shelfId);
+              handleEditBook(book, shelfId, categoryId);
+              // Clear the hash to prevent re-triggering
+              window.history.replaceState(null, '', ' ');
+            }
+          }
+        }
+      }
+    }
+  }, [location.hash, currentUser, bookshelves]);
 
   const activeBookshelf = useMemo(() => {
     if (activeTabId) return bookshelves.find(shelf => shelf.id === activeTabId);
@@ -162,6 +190,7 @@ const MyBookshelf: React.FC = () => {
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
         bookshelves={bookshelves}
+        onSelectBook={handleEditBook}
        />
 
       {bookshelves.length === 0 ? (

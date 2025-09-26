@@ -159,6 +159,15 @@ const Search: React.FC = () => {
     return `...${text.substring(start, end)}...`;
   }
 
+  // A helper function to generate the correct link based on user
+  const getBookLink = (result: SearchResult) => {
+    const hash = `#bookId=${result.book.id}&shelfId=${result.shelfId}&categoryId=${result.categoryId}`;
+    if (currentUser && currentUser.id === result.user.id) {
+      return `/my-bookshelf${hash}`;
+    }
+    return `/users/${result.user.id}${hash}`;
+  };
+
   return (
     <div className="container mx-auto">
       <h1 className="text-3xl font-bold mb-6">書籍検索</h1>
@@ -182,18 +191,19 @@ const Search: React.FC = () => {
             {searchResults.map((result, index) => (
               <div key={`${result.book.id}-${index}`} className="bg-gray-50 p-4 rounded-md">
                 <div className="flex justify-between items-start">
-                  <div>
-                      <Link to={`/users/${result.user.id}`} className="text-lg font-bold text-primary hover:underline">
-                          <Highlight text={result.book.title} highlight={query} />
-                      </Link>
-                      <p className="text-sm text-gray-600">
-                          著者: <Highlight text={result.book.author} highlight={query} />
-                      </p>
+                  <div className="flex items-center space-x-2">
+                    <img src={result.user.avatarUrl} alt={result.user.name} className="w-6 h-6 rounded-full" />
+                    <Link to={ currentUser && currentUser.id === result.user.id ? `/my-bookshelf` : `/users/${result.user.id}`} className="text-sm text-gray-500 hover:underline">{result.user.name}</Link>
                   </div>
-                  <Link to={`/users/${result.user.id}`} className="flex items-center space-x-2 flex-shrink-0 ml-4">
-                      <img src={result.user.avatarUrl} alt={result.user.name} className="w-8 h-8 rounded-full" />
-                      <span className="text-sm font-medium text-gray-700">{result.user.name}</span>
+                  <Link 
+                    to={getBookLink(result)}
+                    className="text-lg font-bold text-primary hover:underline"
+                  >
+                    <Highlight text={result.book.title} highlight={query} />
                   </Link>
+                  <p className="text-sm text-gray-600">
+                    著者: <Highlight text={result.book.author} highlight={query} />
+                  </p>
                 </div>
 
                 <div className="mt-2 text-xs text-gray-500 space-y-2">
