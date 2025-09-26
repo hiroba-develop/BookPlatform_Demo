@@ -49,7 +49,7 @@ const BrowseBookshelves: React.FC = () => {
                 </div>
               </div>
               
-              <Link to={`/users/${user.id}`} className="mt-auto w-full bg-accent text-white text-center font-bold py-2 px-4 rounded-md hover:bg-opacity-80 transition-colors">
+              <Link to={`/users/${user.id}`} className="mt-auto w-full bg-primary text-white text-center font-bold py-2 px-4 rounded-md hover:bg-opacity-80 transition-colors">
                 本棚を覗く
               </Link>
             </div>

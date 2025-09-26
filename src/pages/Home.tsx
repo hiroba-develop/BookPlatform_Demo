@@ -81,7 +81,10 @@ const Home: React.FC = () => {
         <h1 className="text-2xl md:text-4xl font-bold font-serif text-main mb-4">本棚で、自分を表現しよう。</h1>
         <p className="text-lg text-text-secondary mb-8">BookPlatformは、あなたの読書履歴を可視化し、新しいつながりを生むSNSです。</p>
         {!user && (
-          <button className="bg-accent text-primary font-bold py-3 px-8 rounded-full hover:bg-opacity-80 transition-colors">
+          <button
+            onClick={() => navigate('/signup')}
+            className="bg-accent text-primary font-bold py-3 px-8 rounded-full hover:bg-opacity-80 transition-colors"
+          >
             7日間無料トライアル
           </button>
         )}
@@ -169,21 +172,23 @@ const Home: React.FC = () => {
       )}
 
       {/* AIレコメンド */}
-      <section>
-        <h2 className="text-2xl font-bold font-serif text-main mb-6">あなたへのおすすめ</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
-          {recommendationBooks.map(book => (
-            <RecommendationBookCard
-              key={book.id}
-              id={book.id}
-              title={book.title}
-              author={book.author}
-              isbn={book.isbn}
-              imageUrl={book.imageUrl}
-            />
-          ))}
-        </div>
-      </section>
+      {user && (
+        <section>
+          <h2 className="text-2xl font-bold font-serif text-main mb-6">あなたへのおすすめ</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
+            {recommendationBooks.map(book => (
+              <RecommendationBookCard
+                key={book.id}
+                id={book.id}
+                title={book.title}
+                author={book.author}
+                isbn={book.isbn}
+                imageUrl={book.imageUrl}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 新着情報 */}
       <section className="mt-16">

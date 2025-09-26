@@ -3,7 +3,7 @@ import Header from "./Header";
 
 const Layout = () => {
   const location = useLocation();
-  const noHeaderPaths = ["/login", "/signup"];
+  const noHeaderPaths: string[] = [];
 
   return (
     <div className="min-h-screen bg-background text-sub-2 flex flex-col">

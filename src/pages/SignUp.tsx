@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const SignUp: React.FC = () => {
   const interestTags = ["ビジネス", "小説", "漫画", "テクノロジー", "歴史", "自己啓発", "サイエンス", "趣味"];
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+    <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="max-w-4xl w-full bg-white rounded-lg shadow-xl p-6 sm:p-8">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">会員登録</h2>
         
@@ -32,7 +39,7 @@ const SignUp: React.FC = () => {
                 <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" type="password" placeholder="******************" />
               </div>
                <div className="flex items-center justify-between">
-                <button className="bg-accent hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" type="button">
+                <button className="bg-primary hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" type="button">
                   登録する
                 </button>
               </div>
@@ -47,7 +54,15 @@ const SignUp: React.FC = () => {
             <h2 className="text-lg font-bold text-sub-2 mb-4">興味のあるタグを選択</h2>
             <div className="flex flex-wrap gap-2">
               {interestTags.map(tag => (
-                <button key={tag} className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-accent hover:text-white focus:bg-accent focus:text-white">
+                <button 
+                  key={tag} 
+                  onClick={() => toggleTag(tag)}
+                  className={`${
+                    selectedTags.includes(tag)
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-200 text-gray-700'
+                  } px-3 py-1 rounded-full text-sm hover:bg-primary hover:text-white transition-colors`}
+                >
                   {tag}
                 </button>
               ))}
