@@ -77,22 +77,35 @@ const Home: React.FC = () => {
   return (
     <div className="container mx-auto">
       {/* ヒーローセクション */}
-      <section className="text-center py-20">
-        <h1 className="text-2xl md:text-4xl font-bold font-serif text-main mb-4">本棚で、自分を表現しよう。</h1>
-        <p className="text-lg text-text-secondary mb-8">BookPlatformは、あなたの読書履歴を可視化し、新しいつながりを生むSNSです。</p>
-        {!user && (
-          <button
-            onClick={() => navigate('/signup')}
-            className="bg-accent text-primary font-bold py-3 px-8 rounded-full hover:bg-opacity-80 transition-colors"
-          >
-            7日間無料トライアル
-          </button>
-        )}
+      <section 
+        className="relative text-center py-20 text-white bg-cover bg-center"
+        style={{ backgroundImage: "url('/library.jpg')" }}
+      >
+        <div className="absolute inset-0 bg-black opacity-50"></div>
+        <div className="relative z-10">
+          <h2 className="text-xl md:text-2xl font-semibold text-gray-200 mb-4">HR ナレッジ・タンク</h2>
+          <h1 className="text-4xl md:text-6xl font-bold font-serif mb-6 leading-tight">
+            本棚と現場を<br />
+            <span className="text-5xl md:text-7xl">”つなぐ”</span>
+          </h1>
+          <p className="text-lg md:text-xl text-gray-200 mb-8">
+            人事の学びと実践を循環させる<br />
+            HRナレッジプラットフォーム
+          </p>
+          {!user && (
+            <button
+              onClick={() => navigate('/signup')}
+              className="bg-accent text-primary font-bold py-3 px-8 rounded-full hover:bg-opacity-80 transition-transform transform hover:scale-105"
+            >
+              7日間無料トライアル
+            </button>
+          )}
+        </div>
       </section>
 
       {/* 最近のアクティビティ */}
       {user && (
-        <section className="mb-16">
+        <section className="mb-16 mt-16">
           <h2 className="text-2xl font-bold font-serif text-main mb-6">最近のアクティビティ</h2>
           <div className="space-y-8">
             {dummyActivities.map(activity => (
@@ -188,6 +201,99 @@ const Home: React.FC = () => {
             ))}
           </div>
         </section>
+      )}
+
+      {!user && (
+        <>
+        <section id="features" className="py-16 md:py-24 bg-white">
+          <div className="container mx-auto px-6">
+              <div className="text-center mb-12">
+                  <h3 className="text-3xl md:text-4xl font-bold text-main">HR ナレッジ・タンクでできること</h3>
+                  <p className="text-text-secondary mt-2">本を通じて、新しい自分を発見し、人とつながる体験を。</p>
+                  <div className="inline-block w-20 h-1 bg-primary mt-4 rounded"></div>
+              </div>
+              <div className="grid md:grid-cols-3 gap-8">
+                  <div className="bg-background p-8 rounded-xl shadow-md border border-border">
+                      <div className="text-primary mb-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v11.494m-9-5.494h18" /></svg>
+                      </div>
+                      <h4 className="text-xl font-bold mb-2 text-center text-main">本棚をかんたん作成</h4>
+                      <p className="text-main text-sm">書籍検索APIと連携し、読んだ本を簡単に登録。カテゴリやハッシュタグで、あなただけのオリジナル本棚を直感的に構築できます。</p>
+                  </div>
+                  <div className="bg-background p-8 rounded-xl shadow-md border border-border">
+                       <div className="text-primary mb-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.125-1.274-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.125-1.274.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                      </div>
+                      <h4 className="text-xl font-bold mb-2 text-center text-main">価値観でつながる</h4>
+                      <p className="text-main text-sm">他ユーザーの本棚を覗いて、新たな興味を発見。フォロー機能で、同じ価値観を持つ人々と簡単につながれます。</p>
+                  </div>
+                  <div className="bg-background p-8 rounded-xl shadow-md border border-border">
+                       <div className="text-primary mb-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                      </div>
+                      <h4 className="text-xl font-bold mb-2 text-center text-main">いつでも知識を取り出せる</h4>
+                      <p className="text-main text-sm">本から得た示唆やアクションプランなどナレッジタンクに記録することにより、いつでも知識が取り出せます。</p>
+                  </div>
+              </div>
+          </div>
+        </section>
+
+        <section id="target" className="py-16 md:py-24">
+            <div className="container mx-auto px-6">
+                 <div className="text-center mb-12">
+                    <h3 className="text-3xl md:text-4xl font-bold text-main">特に、こんな方におすすめです</h3>
+                     <p className="text-text-secondary mt-2">本を軸とした、新しいコミュニケーションを求めるすべての方へ。</p>
+                    <div className="inline-block w-20 h-1 bg-primary mt-4 rounded"></div>
+                </div>
+                <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
+                    <div className="bg-white p-6 rounded-lg shadow">
+                        <h4 className="font-bold text-lg text-primary">教えたい・学びたい人事の方</h4>
+                        <p className="text-sm mt-2 text-main">候補者や社員の読書傾向から、カルチャーフィットや潜在能力を把握。自社のナレッジ共有や育成のヒントにも繋がります。</p>
+                    </div>
+                     <div className="bg-white p-6 rounded-lg shadow">
+                        <h4 className="font-bold text-lg text-primary">すべての読書愛好家の方</h4>
+                        <p className="text-sm mt-2 text-main">積読の解消から、読後の感動の共有まで。あなたの読書体験を記録し、同じ本を愛する仲間と語り合う場を提供します。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="how-to" className="py-16 md:py-24 bg-white">
+            <div className="container mx-auto px-6 text-center">
+                 <div className="text-center mb-12">
+                    <h3 className="text-3xl md:text-4xl font-bold text-main">かんたん3ステップで開始</h3>
+                    <div className="inline-block w-20 h-1 bg-primary mt-4 rounded"></div>
+                </div>
+                <div className="grid md:grid-cols-3 gap-8 items-start">
+                    <div className="relative">
+                        <div className="bg-primary text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">1</div>
+                        <h4 className="font-bold text-lg mb-2 text-main">無料会員登録</h4>
+                        <p className="text-sm text-main">メールアドレスとパスワードで簡単登録。興味のあるタグを選んで、あなたへのおすすめを受け取る準備をしましょう。</p>
+                    </div>
+                    <div>
+                         <div className="bg-primary text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">2</div>
+                        <h4 className="font-bold text-lg mb-2 text-main">あなたの本棚を作成</h4>
+                        <p className="text-sm text-main">タイトル検索で本を追加し、あなたの本棚を構築。読書体験をハッシュタグで豊かに表現しましょう。</p>
+                    </div>
+                    <div>
+                         <div className="bg-primary text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">3</div>
+                        <h4 className="font-bold text-lg mb-2 text-main">つながる・見つける</h4>
+                        <p className="text-sm text-main">気になる人の本棚を覗いたり、タグで検索したり。新たな本と人との出会いが、あなたを待っています。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section className="bg-primary py-16 md:py-24">
+            <div className="container mx-auto px-6 text-center">
+                <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">さあ、あなたの本棚を世界に公開しよう。</h3>
+                <p className="text-white/80 max-w-2xl mx-auto mb-8">思考を整理し、新しいつながりを生む。まずは無料で、その体験を。</p>
+                 <button onClick={() => navigate('/signup')} className="bg-white text-primary font-bold px-8 py-4 rounded-lg shadow-lg hover:bg-gray-100 transition-transform transform hover:scale-105 inline-block">
+                    7日間無料ではじめる
+                </button>
+            </div>
+        </section>
+        </>
       )}
 
       {/* 新着情報 */}

@@ -149,7 +149,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">ナレッジタンクのタグ</label>
              <div className="flex">
-              <input type="text" value={knowledgeTagInput} onChange={(e) => setKnowledgeTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddTag('knowledge')} placeholder="#キーワードを追加" className="w-full p-2 border rounded-l-md"/>
+              <input type="text" value={knowledgeTagInput} onChange={(e) => setKnowledgeTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddTag('knowledge')} placeholder="#後から知識を引き出すためのキーワードを追加してください" className="w-full p-2 border rounded-l-md"/>
               <button onClick={() => handleAddTag('knowledge')} className="bg-gray-200 px-4 rounded-r-md"><PlusIcon className="h-5 w-5 text-gray-600"/></button>
             </div>
             <div className="mt-2 flex flex-wrap gap-2">

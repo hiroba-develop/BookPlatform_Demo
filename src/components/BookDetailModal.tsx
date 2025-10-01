@@ -1,6 +1,6 @@
 import React from 'react';
 import type { UserBook } from '../types';
-import { XMarkIcon, StarIcon } from '@heroicons/react/24/solid';
+import { XMarkIcon, StarIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/solid';
 import { useHashtagClick } from '../hooks/useHashtagClick';
 
 interface BookDetailModalProps {
@@ -27,6 +27,8 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({ isOpen, onClose, book
   const { handleHashtagClick } = useHashtagClick();
   
   if (!isOpen || !book) return null;
+
+  const amazonSearchUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(`${book.title} ${book.author} ${book.isbn}`)}`;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-2 sm:p-4">
@@ -56,6 +58,17 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({ isOpen, onClose, book
               <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
           </div>
+
+          <a
+            href={amazonSearchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-primary hover:underline mb-4"
+          >
+            Amazonで探す
+            <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+          </a>
+
 
           <div className="space-y-4 sm:space-y-6 text-sm">
             {book.userTags && book.userTags.length > 0 && (
