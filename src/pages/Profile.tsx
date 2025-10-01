@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { UserCircleIcon, BookOpenIcon, EyeIcon, StarIcon, BookmarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon, BookOpenIcon, EyeIcon, StarIcon, BookmarkIcon } from '@heroicons/react/24/outline';
 import { useBookshelf } from '../contexts/BookshelfContext';
 
 const ToggleSwitch = ({ checked, onChange }: { checked: boolean, onChange: (checked: boolean) => void }) => (
