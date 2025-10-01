@@ -45,10 +45,6 @@ const UserProfile: React.FC = () => {
     return null;
   }, [activeTabId, bookshelves]);
 
-  const handleBookClick = (book: UserBook) => {
-    setSelectedBook(book);
-  };
-
   if (!user) {
     return <div className="text-center p-8">ユーザーが見つかりませんでした。</div>;
   }
