@@ -99,11 +99,16 @@ const UserProfile: React.FC = () => {
                           <p className="text-gray-500">このカテゴリには本がありません。</p>
                         ) : (
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                            {category.books.map(book => (
-                              <div key={book.id} className="relative group cursor-pointer" onClick={() => handleBookClick(book)}>
-                                  <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} tags={book.userTags} />
-                              </div>
-                            ))}
+                            {category.books.map(book => {
+                              const amazonUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(book.title)}+${encodeURIComponent(book.author)}`;
+                              return (
+                                <div key={book.id} className="relative group">
+                                  <a href={amazonUrl} target="_blank" rel="noopener noreferrer">
+                                    <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} tags={book.userTags} />
+                                  </a>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
@@ -121,11 +126,16 @@ const UserProfile: React.FC = () => {
             <span className="ml-2 px-3 py-1 text-sm font-semibold bg-muted text-text-secondary rounded-full">{user.tsundoku.length}冊</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 bg-muted p-6 rounded-lg">
-            {user.tsundoku.map(book => (
-              <div key={book.id} className="relative group cursor-pointer" onClick={() => handleBookClick(book)}>
-                <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} tags={book.userTags} />
-              </div>
-            ))}
+            {user.tsundoku.map(book => {
+              const amazonUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(book.title)}+${encodeURIComponent(book.author)}`;
+              return (
+                <div key={book.id} className="relative group">
+                  <a href={amazonUrl} target="_blank" rel="noopener noreferrer">
+                    <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} tags={book.userTags} />
+                  </a>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

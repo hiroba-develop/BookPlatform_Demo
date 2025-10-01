@@ -28,7 +28,7 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({ isOpen, onClose, book
   
   if (!isOpen || !book) return null;
 
-  const amazonSearchUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(`${book.title} ${book.author} ${book.isbn}`)}`;
+  const amazonSearchUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(book.title)}+${encodeURIComponent(book.author)}`;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-2 sm:p-4">

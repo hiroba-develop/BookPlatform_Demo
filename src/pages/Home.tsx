@@ -6,6 +6,7 @@ import { newArrivalsData } from '../data/newArrivals';
 import { recommendationBooks } from '../data/recommendations';
 import NewArrivalBookCard from '../components/NewArrivalBookCard';
 import RecommendationBookCard from '../components/RecommendationBookCard';
+import libraryImageUrl from '../assets/library.jpg';
 
 // 星評価を表示するコンポーネント
 const StarRating = ({ rating }: { rating: number }) => {
@@ -79,7 +80,7 @@ const Home: React.FC = () => {
       {/* ヒーローセクション */}
       <section 
         className="relative text-center py-20 text-white bg-cover bg-center"
-        style={{ backgroundImage: "url('/library.jpg')" }}
+        style={{ backgroundImage: `url(${libraryImageUrl})` }}
       >
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="relative z-10">
