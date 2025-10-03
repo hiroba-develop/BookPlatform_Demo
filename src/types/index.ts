@@ -358,6 +358,7 @@ export interface Book {
   imageUrl: string;
   description: string;
   link: string;
+  userCoverImage?: string; // ユーザーがアップロードした画像
 }
 
 export interface UserBookRating {
@@ -372,6 +373,7 @@ export interface UserBook {
   author: string;
   isbn: string;
   publisher?: string;
+  coverImage?: string;
   description?: string;
   status: '読了' | '読書中' | '積読';
   rating?: number;
@@ -385,6 +387,7 @@ export interface UserBook {
   visibility?: 'public' | 'private';
   containsSpoiler?: boolean;
   imageUrl?: string;
+  userCoverImage?: string;
   readingStatus?: 'finished' | 'reading' | 'unread';
 }
 

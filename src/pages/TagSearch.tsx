@@ -44,6 +44,7 @@ const TagSearch: React.FC = () => {
                 author={book.author}
                 tags={book.userTags}
                 imageUrl={book.imageUrl}
+                userCoverImage={book.userCoverImage}
               />
             ))}
           </div>

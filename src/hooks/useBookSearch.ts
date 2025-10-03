@@ -483,13 +483,21 @@ const useBookSearch = () => {
         uniqueBooks.push(bestBook);
       }
       
-      if (uniqueBooks.length === 0) {
+      // さらに重複除去: ISBNまたはタイトル+著者で重複チェック
+      const finalUniqueBooks = uniqueBooks.filter((book, index, self) => {
+        return index === self.findIndex(b => 
+          (b.isbn && book.isbn && b.isbn === book.isbn) || 
+          (b.title === book.title && b.author === book.author)
+        );
+      });
+      
+      if (finalUniqueBooks.length === 0) {
         setError({
           message: '該当する書籍が見つかりませんでした。検索条件を変更してお試しください。',
           isNoResults: true
         });
       }
-      setBooks(uniqueBooks);
+      setBooks(finalUniqueBooks);
 
     } catch (err) {
       console.error('Search error:', err);

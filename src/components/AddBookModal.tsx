@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Book, UserBook, Bookshelf, Tag } from '../types';
 import { GlobeAltIcon, LockClosedIcon, XMarkIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import BookSearchModal from './BookSearchModal';
+import ShareModal from './ShareModal';
 import { useBookshelf } from '../contexts/BookshelfContext';
 import { categorySuggestions as staticCategorySuggestions } from '../data/categories';
 
@@ -20,6 +21,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose, onSave, bo
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [title, setTitle] = useState('');
+  const [author, setAuthor] = useState('');
+  const [isbn, setIsbn] = useState('');
+  const [coverImage, setCoverImage] = useState('');
   
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const [status, setStatus] = useState<'読了' | '読書中' | '積読'>('読了');
@@ -28,6 +32,8 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose, onSave, bo
   const [tags, setTags] = useState<Tag[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [savedBook, setSavedBook] = useState<UserBook | null>(null);
 
   const activeBookshelf = bookshelves.find(b => b.id === bookshelfId);
 
@@ -81,6 +87,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose, onSave, bo
     setIsSearchModalOpen(false);
     setSelectedBook(null);
     setTitle('');
+    setAuthor('');
+    setIsbn('');
+    setCoverImage('');
     setVisibility('public');
     setStatus('読了');
     setBookshelfId(initialBookshelfId || (bookshelves.length > 0 ? bookshelves[0].id : ''));
@@ -88,6 +97,8 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose, onSave, bo
     setTags([]);
     setTagInput('');
     setNewCategoryName('');
+    setIsShareModalOpen(false);
+    setSavedBook(null);
   }, [initialBookshelfId, bookshelves]);
   
   const handleClose = () => {
@@ -105,6 +116,20 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose, onSave, bo
   const handleSelectBook = (book: Book) => {
     setSelectedBook(book);
     setTitle(book.title);
+    setAuthor(book.author);
+    setIsbn(book.isbn || '');
+    setCoverImage(book.imageUrl);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleAddTag = () => {
@@ -135,11 +160,17 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose, onSave, bo
   };
 
   const handleSave = () => {
-    if (!selectedBook) return;
+    if (!title) {
+      alert('タイトルは必須です。');
+      return;
+    };
     
     const bookToAdd: UserBook = {
-      ...selectedBook,
-      isbn: selectedBook.isbn || '',
+      id: selectedBook ? selectedBook.id : new Date().toISOString(),
+      title,
+      author,
+      isbn,
+      coverImage,
       status,
       userTags: tags,
       visibility,
@@ -152,7 +183,10 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose, onSave, bo
     } else if (bookshelfId && categoryId) {
       onSave(bookToAdd, bookshelfId, categoryId);
     }
-    handleClose();
+    
+    // 本を保存した後、シェアモーダルを表示
+    setSavedBook(bookToAdd);
+    setIsShareModalOpen(true);
   };
   
   const handleAddCategory = () => {
@@ -163,6 +197,21 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose, onSave, bo
       setCategoryId(tempId);
       setNewCategoryName('');
     }
+  };
+
+  const handleShareToX = () => {
+    setIsShareModalOpen(false);
+    handleClose();
+  };
+
+  const handleShareToFacebook = () => {
+    setIsShareModalOpen(false);
+    handleClose();
+  };
+
+  const handleShareLater = () => {
+    setIsShareModalOpen(false);
+    handleClose();
   };
 
 
@@ -176,7 +225,16 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose, onSave, bo
         onSelectBook={handleSelectBook}
         initialQuery={title}
       />
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center px-4 py-6">
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        onShareToX={handleShareToX}
+        onShareToFacebook={handleShareToFacebook}
+        onShareLater={handleShareLater}
+        bookTitle={savedBook?.title || ''}
+        bookAuthor={savedBook?.author || ''}
+      />
+      <div className={`fixed inset-0 bg-black bg-opacity-50 ${isShareModalOpen ? 'z-40' : 'z-50'} flex justify-center items-center px-4 py-6`}>
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col text-sm">
           <div className="flex justify-between items-center mb-4 flex-shrink-0">
             <h2 className="text-lg font-bold">本を追加</h2>
@@ -205,6 +263,22 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose, onSave, bo
                       <MagnifyingGlassIcon className="h-5 w-5 text-gray-600"/>
                     </button>
                   </div>
+              </div>
+
+              <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">著者</label>
+                  <input type="text" value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="著者名を入力..." className="w-full p-2 border rounded-md text-sm"/>
+              </div>
+
+              <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">表紙画像（※ご自身で登録する場合）</label>
+                  <input type="file" accept="image/*" onChange={handleImageChange} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300"/>
+                  {coverImage && <img src={coverImage} alt="Cover preview" className="mt-2 w-24 h-36 object-cover rounded" />}
+              </div>
+
+              <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">ISBN</label>
+                  <input type="text" value={isbn} onChange={(e) => setIsbn(e.target.value)} placeholder="ISBNを入力..." className="w-full p-2 border rounded-md text-sm"/>
               </div>
 
               <div>
@@ -294,7 +368,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose, onSave, bo
             <button onClick={handleClose} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm">キャンセル</button>
             <button 
               onClick={handleSave} 
-              disabled={!selectedBook || (status !== '積読' && (!bookshelfId || !categoryId))} 
+              disabled={!title || (status !== '積読' && (!bookshelfId || !categoryId))} 
               className="px-4 py-2 bg-accent text-white font-bold rounded-md hover:bg-opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
             >
               追加

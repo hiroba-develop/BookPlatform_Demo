@@ -18,6 +18,14 @@ const BookSearchModal: React.FC<BookSearchModalProps> = ({ isOpen, onClose, onSe
   const [isbnQuery, setIsbnQuery] = useState('');
   const { books, loading, error, searchBooks } = useBookSearch();
 
+  // 重複除去: 同じISBNまたは同じタイトル+著者の本を除去
+  const uniqueBooks = books.filter((book, index, self) => {
+    return index === self.findIndex(b => 
+      (b.isbn && book.isbn && b.isbn === book.isbn) || 
+      (b.title === book.title && b.author === book.author)
+    );
+  });
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -156,19 +164,19 @@ const BookSearchModal: React.FC<BookSearchModalProps> = ({ isOpen, onClose, onSe
               </div>
             </div>
           )}
-          {!loading && !error && books.length === 0 && (
+          {!loading && !error && uniqueBooks.length === 0 && (
             <p className="text-sm text-gray-600 text-center mb-3">
               お探しの書籍が見つからない場合は、ISBN（13桁）での検索をお試しください。
             </p>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {books.map(book => (
+            {uniqueBooks.map(book => (
               <div 
-                key={book.id} 
+                key={`${book.id}_${book.isbn || book.title}`} 
                 className="border p-2 rounded flex flex-col justify-between cursor-pointer hover:shadow-lg transition-shadow"
                 onClick={() => handleSelect(book)}
               >
-                <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} />
+                <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} userCoverImage={book.userCoverImage} />
               </div>
             ))}
           </div>

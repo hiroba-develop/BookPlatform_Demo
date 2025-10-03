@@ -100,7 +100,7 @@ const UserProfile: React.FC = () => {
                               return (
                                 <div key={book.id} className="relative group">
                                   <a href={amazonUrl} target="_blank" rel="noopener noreferrer">
-                                    <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} tags={book.userTags} />
+                                    <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} tags={book.userTags} coverImage={book.coverImage} userCoverImage={book.userCoverImage} />
                                   </a>
                                 </div>
                               );
@@ -127,7 +127,7 @@ const UserProfile: React.FC = () => {
               return (
                 <div key={book.id} className="relative group">
                   <a href={amazonUrl} target="_blank" rel="noopener noreferrer">
-                    <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} tags={book.userTags} />
+                    <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} tags={book.userTags} coverImage={book.coverImage} userCoverImage={book.userCoverImage} />
                   </a>
                 </div>
               );

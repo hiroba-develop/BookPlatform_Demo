@@ -6,7 +6,7 @@ import { newArrivalsData } from '../data/newArrivals';
 import { recommendationBooks } from '../data/recommendations';
 import NewArrivalBookCard from '../components/NewArrivalBookCard';
 import RecommendationBookCard from '../components/RecommendationBookCard';
-import libraryImageUrl from '../assets/library.jpg';
+import libraryImageUrl from '../assets/BookDesign.png';
 
 // 星評価を表示するコンポーネント
 const StarRating = ({ rating }: { rating: number }) => {
@@ -35,6 +35,7 @@ const dummyActivities = [
       title: "組織論のエッセンス",
       author: "Mary Jo Hatch",
       isbn: "9784495390792",
+      userCoverImage: undefined,
     },
     summary: "組織について初めて学ぶ人、組織の「組織化（organizing）」という視点を含めて、組織の理論と現実を結びつけて考えたい人におススメ",
     rating: 4,
@@ -52,6 +53,7 @@ const dummyActivities = [
       title: "リーダブルコード",
       author: "Dustin Boswell, Trevor Foucher",
       isbn: "9784873115658",
+      userCoverImage: undefined,
     },
     summary: "エンジニアなら誰もが読むべき。コードの可読性がいかに重要か、具体的なテクニックと共に学べます。",
     rating: 5,
@@ -79,30 +81,21 @@ const Home: React.FC = () => {
     <div className="container mx-auto">
       {/* ヒーローセクション */}
       <section 
-        className="relative text-center py-20 text-white bg-cover bg-center"
+        className="relative text-center h-[50vh] md:h-[60vh] lg:h-[70vh] text-white bg-cover bg-center bg-no-repeat bg-white"
         style={{ backgroundImage: `url(${libraryImageUrl})` }}
       >
-        <div className="absolute inset-0 bg-black opacity-50"></div>
-        <div className="relative z-10">
-          <h2 className="text-xl md:text-2xl font-semibold text-gray-200 mb-4">HR ナレッジ・タンク</h2>
-          <h1 className="text-4xl md:text-6xl font-bold font-serif mb-6 leading-tight">
-            本棚と現場を<br />
-            <span className="text-5xl md:text-7xl">”つなぐ”</span>
-          </h1>
-          <p className="text-lg md:text-xl text-gray-200 mb-8">
-            人事の学びと実践を循環させる<br />
-            HRナレッジプラットフォーム
-          </p>
-          {!user && (
-            <button
-              onClick={() => navigate('/signup')}
-              className="bg-accent text-primary font-bold py-3 px-8 rounded-full hover:bg-opacity-80 transition-transform transform hover:scale-105"
-            >
-              7日間無料トライアル
-            </button>
-          )}
-        </div>
       </section>
+      
+      {!user && (
+        <div className="text-center py-8">
+          <button
+            onClick={() => navigate('/signup')}
+            className="bg-accent text-primary font-bold py-3 px-8 rounded-full hover:bg-opacity-80 transition-transform transform hover:scale-105"
+          >
+            7日間無料トライアル
+          </button>
+        </div>
+      )}
 
       {/* 最近のアクティビティ */}
       {user && (
@@ -133,6 +126,7 @@ const Home: React.FC = () => {
                         title={activity.book.title}
                         author={activity.book.author}
                         isbn={activity.book.isbn}
+                        userCoverImage={activity.book.userCoverImage}
                       />
                     </div>
                   )}
@@ -209,7 +203,7 @@ const Home: React.FC = () => {
         <section id="features" className="py-16 md:py-24 bg-white">
           <div className="container mx-auto px-6">
               <div className="text-center mb-12">
-                  <h3 className="text-3xl md:text-4xl font-bold text-main">HR ナレッジ・タンクでできること</h3>
+                  <h3 className="text-3xl md:text-4xl font-bold text-main">BOOK DESIGNでできること</h3>
                   <p className="text-text-secondary mt-2">本を通じて、新しい自分を発見し、人とつながる体験を。</p>
                   <div className="inline-block w-20 h-1 bg-primary mt-4 rounded"></div>
               </div>

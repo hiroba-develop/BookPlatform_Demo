@@ -9,6 +9,8 @@ interface BookCardProps {
   author: string;
   tags?: Tag[];
   imageUrl?: string;
+  coverImage?: string;
+  userCoverImage?: string;
   bookState?: UserBook;
 }
 
@@ -33,7 +35,7 @@ const normalizeIsbn13 = (raw?: string): string | undefined => {
   return undefined;
 };
 
-const BookCard: React.FC<BookCardProps> = ({ id, isbn, title, author, tags, imageUrl }) => {
+const BookCard: React.FC<BookCardProps> = ({ id, isbn, title, author, tags, imageUrl, coverImage, userCoverImage }) => {
   const { handleHashtagClick } = useHashtagClick();
   const fallbackImageUrl = 'https://dummyimage.com/150x220/e0e0e0/aaa.png&text=No+Image';
 
@@ -41,16 +43,20 @@ const BookCard: React.FC<BookCardProps> = ({ id, isbn, title, author, tags, imag
 
   const candidates = useMemo(() => {
     const list: string[] = [];
-    // 1) NDL thumbnail
+    // 1) User uploaded cover image (highest priority)
+    if (userCoverImage) list.push(userCoverImage);
+    // 2) Manually uploaded coverImage
+    if (coverImage) list.push(coverImage);
+    // 3) NDL thumbnail
     if (normalizedIsbn13) {
       list.push(`https://ndlsearch.ndl.go.jp/thumbnail/${normalizedIsbn13}.jpg`);
     }
-    // 2) Provided imageUrl prop
+    // 4) Provided imageUrl prop
     if (imageUrl) list.push(imageUrl);
-    // 3) Placeholder last
+    // 5) Placeholder last
     list.push(fallbackImageUrl);
     return list;
-  }, [normalizedIsbn13, imageUrl]);
+  }, [normalizedIsbn13, imageUrl, coverImage, userCoverImage]);
 
   const [index, setIndex] = useState(0);
   const [currentImageUrl, setCurrentImageUrl] = useState<string>(candidates[0] || fallbackImageUrl);
@@ -58,7 +64,7 @@ const BookCard: React.FC<BookCardProps> = ({ id, isbn, title, author, tags, imag
   useEffect(() => {
     setIndex(0);
     setCurrentImageUrl(candidates[0] || fallbackImageUrl);
-  }, [id, normalizedIsbn13, imageUrl, title]);
+  }, [id, normalizedIsbn13, imageUrl, coverImage, userCoverImage, title]);
 
   const handleImageError = () => {
     if (index < candidates.length - 1) {

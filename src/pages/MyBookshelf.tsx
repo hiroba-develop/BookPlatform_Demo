@@ -271,7 +271,7 @@ const MyBookshelf: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
                           {category.books.map(book => (
                           <div key={book.id} className="relative group cursor-pointer" onClick={() => handleEditBook(book, activeBookshelf.id, category.id)}>
-                              <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} tags={book.userTags} />
+                              <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} tags={book.userTags} coverImage={book.coverImage} userCoverImage={book.userCoverImage} />
                               <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button 
                                 onClick={(e) => {
@@ -316,7 +316,7 @@ const MyBookshelf: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
               {tsundokuBooks.map(book => (
                   <div key={book.id} className="relative group cursor-pointer" onClick={() => handleEditBook(book)}>
-                    <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} />
+                    <BookCard id={book.id} title={book.title} author={book.author} isbn={book.isbn} coverImage={book.coverImage} userCoverImage={book.userCoverImage} />
                     <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
                         onClick={(e) => {

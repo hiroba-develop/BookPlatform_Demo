@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { UserBook, Tag, Bookshelf } from '../types';
 import StarRatingInput from './StarRatingInput';
+import ShareModal from './ShareModal';
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 interface EditBookModalProps {
@@ -30,6 +31,10 @@ const EditBookModal: React.FC<EditBookModalProps> = ({
   const [containsSpoiler, setContainsSpoiler] = useState(false);
   const [selectedBookshelfId, setSelectedBookshelfId] = useState<string>('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSearchingCover, setIsSearchingCover] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [savedBook, setSavedBook] = useState<UserBook | null>(null);
 
 
   useEffect(() => {
@@ -46,8 +51,85 @@ const EditBookModal: React.FC<EditBookModalProps> = ({
       setContainsSpoiler(book.containsSpoiler || false);
       setSelectedBookshelfId(initialBookshelfId || '');
       setSelectedCategoryId(initialCategoryId || '');
+      
+      // ユーザーがアップロードした画像がある場合はそれを使用
+      if (book.userCoverImage) {
+        setImagePreview(book.userCoverImage);
+      } else {
+        // 既存の画像がある場合はそれを使用
+        const existingImage = book.coverImage || book.imageUrl;
+        if (existingImage) {
+          setImagePreview(existingImage);
+        }
+        // 画像がない場合は何も表示しない（自動API検索は無効化）
+      }
     }
   }, [book, initialBookshelfId, initialCategoryId]);
+
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSearchCover = async () => {
+    if (!book) return;
+    
+    setIsSearchingCover(true);
+    try {
+      let coverUrl: string | null = null;
+
+      // 1. NDL API を試す（ISBNがある場合）
+      if (book.isbn) {
+        const normalizedIsbn = book.isbn.replace(/[-\s]/g, '');
+        if (normalizedIsbn.length === 13) {
+          const ndlUrl = `https://ndlsearch.ndl.go.jp/thumbnail/${normalizedIsbn}.jpg`;
+          try {
+            // CORSエラーを避けるため、プロキシ経由でアクセスするか、直接URLを設定
+            coverUrl = ndlUrl; // 直接URLを設定（CORSエラーを回避）
+          } catch (error) {
+            console.log('NDL API failed:', error);
+          }
+        }
+      }
+
+      // 2. Google Books API を試す（CORSエラーの可能性があるため無効化）
+      // if (!coverUrl) {
+      //   try {
+      //     const query = `intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(book.author)}`;
+      //     const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`);
+      //     if (response.ok) {
+      //       const data = await response.json();
+      //       if (data.items && data.items.length > 0) {
+      //         const foundCoverUrl = data.items[0].volumeInfo.imageLinks?.thumbnail;
+      //         if (foundCoverUrl) {
+      //           coverUrl = foundCoverUrl.replace(/^http:/, 'https:');
+      //         }
+      //       }
+      //     }
+      //   } catch (error) {
+      //     console.log('Google Books API failed:', error);
+      //   }
+      // }
+
+      if (coverUrl) {
+        setImagePreview(coverUrl);
+      } else {
+        alert('書影が見つかりませんでした。');
+      }
+    } catch (error) {
+      console.error('書影検索エラー:', error);
+      alert('書影の検索中にエラーが発生しました。');
+    } finally {
+      setIsSearchingCover(false);
+    }
+  };
 
   const handleAddTag = (type: 'book' | 'knowledge') => {
     const isBookTag = type === 'book';
@@ -94,8 +176,27 @@ const EditBookModal: React.FC<EditBookModalProps> = ({
       status,
       visibility,
       containsSpoiler,
+      userCoverImage: imagePreview || book.userCoverImage,
     };
     onSave(updatedBook, selectedBookshelfId, selectedCategoryId);
+    
+    // 本を保存した後、シェアモーダルを表示
+    setSavedBook(updatedBook);
+    setIsShareModalOpen(true);
+  };
+
+  const handleShareToX = () => {
+    setIsShareModalOpen(false);
+    onClose();
+  };
+
+  const handleShareToFacebook = () => {
+    setIsShareModalOpen(false);
+    onClose();
+  };
+
+  const handleShareLater = () => {
+    setIsShareModalOpen(false);
     onClose();
   };
 
@@ -104,17 +205,62 @@ const EditBookModal: React.FC<EditBookModalProps> = ({
   const activeBookshelf = bookshelves.find(bs => bs.id === selectedBookshelfId);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-start pt-20">
-      <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold">本の情報を編集</h2>
-          <button onClick={onClose} className="text-2xl text-gray-500 hover:text-gray-800">&times;</button>
-        </div>
+    <>
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        onShareToX={handleShareToX}
+        onShareToFacebook={handleShareToFacebook}
+        onShareLater={handleShareLater}
+        bookTitle={savedBook?.title || ''}
+        bookAuthor={savedBook?.author || ''}
+      />
+      <div className={`fixed inset-0 bg-black bg-opacity-50 ${isShareModalOpen ? 'z-40' : 'z-50'} flex justify-center items-start pt-20`}>
+        <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold">本の情報を編集</h2>
+            <button onClick={onClose} className="text-2xl text-gray-500 hover:text-gray-800">&times;</button>
+          </div>
         
-        <div className="overflow-y-auto pr-4 space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold">{title}</h3>
-            <p className="text-sm text-gray-500">{author}</p>
+          <div className="overflow-y-auto pr-4 space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold">{title}</h3>
+              <p className="text-sm text-gray-500">{author}</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">表紙画像</label>
+            <div className="mt-2 flex items-center gap-4">
+              <div className="w-24 h-36 bg-gray-100 rounded flex items-center justify-center">
+                {imagePreview ? (
+                  <img src={imagePreview} alt="Book cover preview" className="w-full h-full object-cover rounded" />
+                ) : (
+                  <span className="text-xs text-gray-500">No Image</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <input
+                  type="file"
+                  id="cover-image-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+                <label
+                  htmlFor="cover-image-upload"
+                  className="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+                >
+                  画像を変更
+                </label>
+                <button
+                  onClick={handleSearchCover}
+                  disabled={isSearchingCover}
+                  className="bg-accent text-white py-2 px-3 rounded-md shadow-sm text-sm leading-4 font-medium hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSearchingCover ? '検索中...' : '表紙画像を検索'}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -233,14 +379,15 @@ const EditBookModal: React.FC<EditBookModalProps> = ({
             </div>
           )}
 
-        </div>
+          </div>
 
-        <div className="mt-6 pt-4 border-t flex justify-end space-x-3">
-          <button onClick={onClose} className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">キャンセル</button>
-          <button onClick={handleSave} className="px-6 py-2 bg-accent text-white font-bold rounded-md hover:bg-opacity-90">保存</button>
+          <div className="mt-6 pt-4 border-t flex justify-end space-x-3">
+            <button onClick={onClose} className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">キャンセル</button>
+            <button onClick={handleSave} className="px-6 py-2 bg-accent text-white font-bold rounded-md hover:bg-opacity-90">保存</button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
