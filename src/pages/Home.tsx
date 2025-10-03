@@ -92,7 +92,7 @@ const Home: React.FC = () => {
             onClick={() => navigate('/signup')}
             className="bg-accent text-primary font-bold py-3 px-8 rounded-full hover:bg-opacity-80 transition-transform transform hover:scale-105"
           >
-            7日間無料トライアル
+            3か月間（90日間）無料トライアル
           </button>
         </div>
       )}
@@ -284,7 +284,7 @@ const Home: React.FC = () => {
                 <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">さあ、あなたの本棚を世界に公開しよう。</h3>
                 <p className="text-white/80 max-w-2xl mx-auto mb-8">思考を整理し、新しいつながりを生む。まずは無料で、その体験を。</p>
                  <button onClick={() => navigate('/signup')} className="bg-white text-primary font-bold px-8 py-4 rounded-lg shadow-lg hover:bg-gray-100 transition-transform transform hover:scale-105 inline-block">
-                    7日間無料ではじめる
+                 3か月間（90日間）無料ではじめる
                 </button>
             </div>
         </section>
