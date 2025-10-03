@@ -31,7 +31,7 @@ const Profile: React.FC = () => {
   });
 
   // 会員登録時のカテゴリと同じものを使用
-  const interestTags = ["ビジネス", "小説", "漫画", "テクノロジー", "歴史", "自己啓発", "サイエンス", "趣味"];
+  const interestTags = ["組織開発", "採用", "労務", "人材育成", "評価", "組織人事戦略", "マーケティング", "財務会計", "イノベーション"];
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
