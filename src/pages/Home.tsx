@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import BookCard from '../components/BookCard';
 import { useAuth } from '../contexts/AuthContext';
 import { newArrivalsData } from '../data/newArrivals';
 import { recommendationBooks } from '../data/recommendations';
@@ -73,14 +72,6 @@ const dummyActivities: Activity[] = [
 const Home: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  const handleUserClick = (userId: string) => {
-    navigate(`/users/${userId}`);
-  };
-
-  const handleTagClick = (tag: string) => {
-    navigate(`/search?q=${encodeURIComponent(tag)}`);
-  };
 
   return (
     <div className="container mx-auto">

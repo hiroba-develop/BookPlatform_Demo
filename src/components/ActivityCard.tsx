@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import BookCard from './BookCard';
 import StarRating from './StarRating';
-import { Activity } from '../pages/Home';
+import type { Activity } from '../pages/Home';
 
 interface ActivityCardProps {
   activity: Activity;

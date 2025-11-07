@@ -1,5 +1,3 @@
-import React from 'react';
-
 const StarRating = ({ rating }: { rating: number }) => {
   const fullStars = Math.floor(rating);
   const halfStar = rating % 1 !== 0;
