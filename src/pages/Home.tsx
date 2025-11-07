@@ -7,29 +7,34 @@ import { recommendationBooks } from '../data/recommendations';
 import NewArrivalBookCard from '../components/NewArrivalBookCard';
 import RecommendationBookCard from '../components/RecommendationBookCard';
 import libraryImageUrl from '../assets/BookDesign.png';
+import ActivityCard from '../components/ActivityCard';
 
-// 星評価を表示するコンポーネント
-const StarRating = ({ rating }: { rating: number }) => {
-  const fullStars = Math.floor(rating);
-  const halfStar = rating % 1 !== 0;
-  const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-
-  return (
-    <div className="flex text-accent">
-      {[...Array(fullStars)].map((_, i) => <span key={`full-${i}`}>★</span>)}
-      {/* halfStar support can be added if needed */}
-      {[...Array(emptyStars)].map((_, i) => <span key={`empty-${i}`} className="text-gray-300">★</span>)}
-    </div>
-  );
-};
-
+// Activityの型定義をエクスポート
+export interface Activity {
+  id: string;
+  user: { id: string; name: string; avatar: string };
+  action: string;
+  book: {
+    id: string;
+    title: string;
+    author: string;
+    isbn: string;
+    userCoverImage: string | undefined;
+  };
+  summary: string;
+  rating: number;
+  hashtags: string[];
+  knowledgeTank: string;
+  knowledgeTags: string[];
+  timestamp: string;
+}
 
 // 仮のダミーデータ
-const dummyActivities = [
+const dummyActivities: Activity[] = [
   {
     id: "1",
     user: { id: "user-2", name: "読書家A", avatar: "https://dummyimage.com/40x40/ccc/000&text=A" },
-    action: "「組織論のエッセンス」を本棚に追加しました。",
+    action: "さんのおすすめ本です！",
     book: {
       id: "9784495390792",
       title: "組織論のエッセンス",
@@ -47,7 +52,7 @@ const dummyActivities = [
   {
     id: "2",
     user: { id: "user-3", name: "技術好きB", avatar: "https://dummyimage.com/100x100/cccccc/888.png&text=UserB" },
-    action: "「リーダブルコード」を読み始めました。",
+    action: "さんのおすすめ本です！",
     book: {
       id: "9784873115658",
       title: "リーダブルコード",
@@ -97,83 +102,13 @@ const Home: React.FC = () => {
         </div>
       )}
 
-      {/* 最近のアクティビティ */}
+      {/* 今月のおすすめ */}
       {user && (
         <section className="mb-16 mt-16">
-          <h2 className="text-2xl font-bold font-serif text-main mb-6">最近のアクティビティ</h2>
-          <div className="space-y-8">
+          <h2 className="text-2xl font-bold font-serif text-main mb-6">今月のおすすめ</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {dummyActivities.map(activity => (
-              <div key={activity.id} className="card p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <img src={activity.user.avatar} alt={activity.user.name} className="w-10 h-10 rounded-full" />
-                  <div>
-                    <p>
-                      <span className="font-bold">{activity.user.name}</span>
-                      <span className="text-text-secondary">が{activity.action}</span>
-                    </p>
-                    <span className="text-text-secondary text-sm">{activity.timestamp}</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-6">
-                  {activity.book && (
-                     <div 
-                       className="w-full md:w-40 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-                       onClick={() => handleUserClick(activity.user.id)}
-                     >
-                      <BookCard
-                        id={activity.book.id}
-                        title={activity.book.title}
-                        author={activity.book.author}
-                        isbn={activity.book.isbn}
-                        userCoverImage={activity.book.userCoverImage}
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <div>
-                      <h4 className="font-bold font-serif text-main mb-1">サマリー</h4>
-                      <p className="text-sm text-text-secondary bg-muted p-3 rounded-md">{activity.summary}</p>
-                    </div>
-                    <div className="mt-3">
-                      <h4 className="font-bold font-serif text-main mb-1">評価</h4>
-                      <StarRating rating={activity.rating} />
-                    </div>
-                    <div className="mt-3">
-                      <h4 className="font-bold font-serif text-main mb-1">ハッシュタグ</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {activity.hashtags.map(tag => (
-                          <span 
-                            key={tag} 
-                            className="bg-background text-main text-xs px-2 py-1 rounded-full border border-border cursor-pointer hover:bg-accent hover:text-primary transition-colors"
-                            onClick={() => handleTagClick(tag)}
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                     <div className="mt-3">
-                      <h4 className="font-bold font-serif text-main mb-1">ナレッジタンク</h4>
-                      <p className="text-sm text-text-secondary bg-muted p-3 rounded-md">{activity.knowledgeTank}</p>
-                    </div>
-                    <div className="mt-3">
-                      <h4 className="font-bold font-serif text-main mb-1">ナレッジタグ</h4>
-                      <div className="flex flex-wrap gap-2">
-                         {activity.knowledgeTags.map(tag => (
-                          <span 
-                            key={tag} 
-                            className="bg-background text-main text-xs px-2 py-1 rounded-full border border-border cursor-pointer hover:bg-accent hover:text-primary transition-colors"
-                            onClick={() => handleTagClick(tag)}
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ActivityCard key={activity.id} activity={activity} />
             ))}
           </div>
         </section>
@@ -305,6 +240,7 @@ const Home: React.FC = () => {
                     id={book.id}
                     title={book.title}
                     author={book.author}
+                    isbn={book.isbn}
                   />
                 ))}
               </div>

@@ -98,26 +98,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({
           }
         }
       }
-
       // 2. Google Books API を試す（CORSエラーの可能性があるため無効化）
-      // if (!coverUrl) {
-      //   try {
-      //     const query = `intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(book.author)}`;
-      //     const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`);
-      //     if (response.ok) {
-      //       const data = await response.json();
-      //       if (data.items && data.items.length > 0) {
-      //         const foundCoverUrl = data.items[0].volumeInfo.imageLinks?.thumbnail;
-      //         if (foundCoverUrl) {
-      //           coverUrl = foundCoverUrl.replace(/^http:/, 'https:');
-      //         }
-      //       }
-      //     }
-      //   } catch (error) {
-      //     console.log('Google Books API failed:', error);
-      //   }
-      // }
-
       if (coverUrl) {
         setImagePreview(coverUrl);
       } else {
